@@ -6,6 +6,7 @@ import org.joda.time.*;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,40 +22,47 @@ public class Planner {
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
+        printPlan();
     }
 
     private void populateOncall() {
         int i = 0;
         for (Week week : weeks) {
+            final int tempV = i;
+            System.out.println(tempV % TeamMember.values().length + 1);
             List<PersonWeek> matchedWeeks = plan.stream().filter(pw ->
                     pw.week.weekNumber == week.weekNumber &&
-                            pw.person == TeamMember.values()[i % TeamMember.values().length + 1]
+                            pw.person == TeamMember.values()[tempV % TeamMember.values().length]
             ).collect(Collectors.toList());
             if (matchedWeeks.size() > 1) {
                 System.out.println(matchedWeeks);
                 throw new RuntimeException("More than one weeks matched");
             }
             matchedWeeks.get(0).description = "Oncall";
+            i = i+1;
         }
     }
 
     public void printPlan() {
-        //CSVWriter writer = new CSVWriter(new StringWriter());
-
-        //writer.writeNext(Arrays.asList("Employee/Week", weeks.stream().), true);
         System.out.print("Employee/Week");
         for (Week week : weeks) {
-            System.out.print(week.startDate  + " : " + week.endDate);
+            System.out.print("," + week.startDate  + " : " + week.endDate );
         }
         System.out.println();
         for (TeamMember member : TeamMember.values()) {
-
+            System.out.print(member.name() + ",");
+            String row = plan.stream().filter(pw -> pw.person == member)
+                    .sorted((o1, o2) -> (o2.week.weekNumber - o1.week.weekNumber))
+                    .map(pw -> pw.description)
+                    .reduce("", (a, b) -> a + "," + b);
+            System.out.print(row);
+            System.out.println();
         }
     }
 
     private PersonWeek getPersonWeek(Week week, final TeamMember teamMember) {
         final int weekNumber = week.weekNumber;
-
+        return null;
     }
 
     private void populatePlan() {
@@ -80,9 +88,10 @@ public class Planner {
             e.weekNumber = weekNumber;
             e.startDate = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
             e.endDate = startDate.withDayOfWeek(DateTimeConstants.SUNDAY);
-            weeks.add(e)
+            weeks.add(e);
             System.out.println(startDate.withDayOfWeek(DateTimeConstants.MONDAY) + " - " + startDate.withDayOfWeek(DateTimeConstants.SUNDAY));
             startDate = startDate.plusDays(7);
+            weekNumber +=1;
         }
     }
 
