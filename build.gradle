@@ -29,6 +29,8 @@ repositories {
         url 'http://oss.sonatype.org/content/repositories/snapshots'
     }
 
+  ext.mainClassName = 'com.example.helloworld.HelloWorldApplication'
+  ext.configFile = 'src/main/resources/example.yml'
 
 
 }
