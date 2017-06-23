@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/planner.iml" filepath="$PROJECT_DIR$/.idea/modules/planner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/planner.iml" filepath="$PROJECT_DIR$/planner.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/planner_main.iml" filepath="$PROJECT_DIR$/.idea/modules/planner_main.iml" group="planner" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/planner_test.iml" filepath="$PROJECT_DIR$/.idea/modules/planner_test.iml" group="planner" />
     </modules>
