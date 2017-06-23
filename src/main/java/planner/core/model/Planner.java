@@ -171,25 +171,29 @@ public class Planner {
 
     private void swapOncall(PersonWeek requesterCurrentWeek) {
         try {
-            PersonWeek requesteeCurrentWeek = getPlanForWeek(requesterCurrentWeek.week.startDate)
+            List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.startDate)
                 .stream()
                 .filter(pw -> pw.leaves == 0)
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
-                .findAny()
-                .get();
-            PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
-                .stream()
-                .filter(pw -> pw.description.contains(ONCALL))
-                .findFirst().get();
-            PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
-                .stream()
-                .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
-                .findAny()
-                .get();
-            requesterOncallWeek.description = ONCALL;
-            requesteeOncallWeek.description = "";
-            requesterCurrentWeek.description = "";
-            requesteeCurrentWeek.description = ONCALL;
+                .collect(Collectors.toList());
+            for (PersonWeek requesteeCurrentWeek : requesteeCurrentWeeks) {
+                PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
+                    .stream()
+                    .filter(pw -> pw.description.contains(ONCALL))
+                    .findFirst().get();
+                PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
+                    .stream()
+                    .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
+                    .findAny()
+                    .get();
+                if (requesterOncallWeek.leaves == 0) {
+                    requesterOncallWeek.description = ONCALL;
+                    requesteeOncallWeek.description = "";
+                    requesterCurrentWeek.description = "";
+                    requesteeCurrentWeek.description = ONCALL;
+                    break;
+                }
+            }
 
         } catch (Exception e) {
             System.out.println("ERROR : Could not swap oncall");
