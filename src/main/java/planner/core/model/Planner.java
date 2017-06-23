@@ -1,10 +1,8 @@
 package planner.core.model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Singleton;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
@@ -58,9 +56,60 @@ public class Planner {
 
     private boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
 
-        Arrays.stream(TeamMember.values()).filter(tm -> tm.level.ordinal() >= levelOnwards.ordinal());
+        for (int i = 1 ; i <= okr.parallelism ; i++) {
 
+        }
 
+        List<List<TeamMember>> allCombinations = new ArrayList<>();
+
+        Map<List<TeamMember>, LocalDate> endDateMap = new HashMap<>();
+        for(List<TeamMember> eachCombination : allCombinations) {
+            int effortRemaining = okr.effortinPersonDays;
+            for (Week week : weeks) {
+                int totalWeekEffort = 0;
+                for (TeamMember member : eachCombination) {
+                    PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
+                    totalWeekEffort += 5 - planForPersonWeek.occupied - planForPersonWeek.leaves;
+                }
+                effortRemaining -= totalWeekEffort;
+                if (effortRemaining <= 0) {
+                    endDateMap.put(eachCombination,week.endDate);
+                    break;
+                }
+            }
+        }
+
+        Map.Entry<List<TeamMember>, LocalDate> listLocalDateEntry = endDateMap.entrySet().stream().sorted(new Comparator<Map.Entry<List<TeamMember>, LocalDate>>() {
+            @Override
+            public int compare(Map.Entry<List<TeamMember>, LocalDate> o1, Map.Entry<List<TeamMember>, LocalDate> o2) {
+                return o1.getValue().isAfter(o2.getValue()) ? 1 : -1;
+            }
+        }).findFirst().get();
+
+        int efforRemaining = okr.effortinPersonDays;
+
+        for (Week week : weeks) {
+            for (TeamMember member :  listLocalDateEntry.getKey()) {
+                PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
+                if (efforRemaining >= planForPersonWeek.unoccupied()) {
+                    planForPersonWeek.occupied += planForPersonWeek.unoccupied();
+                    efforRemaining -= planForPersonWeek.unoccupied();
+                } else {
+                    planForPersonWeek.occupied += efforRemaining;
+                    efforRemaining -= efforRemaining;
+                }
+                if (efforRemaining == 0) {
+                    break;
+                }
+            }
+            if (efforRemaining == 0) {
+                break;
+            }
+        }
+
+        if (efforRemaining > 0) {
+            return true;
+        }
         return false;
     }
 
@@ -97,11 +146,6 @@ public class Planner {
             System.out.print(row);
             System.out.println();
         }
-    }
-
-    private PersonWeek getPersonWeek(Week week, final TeamMember teamMember) {
-        final int weekNumber = week.weekNumber;
-        return null;
     }
 
     private void populatePlan() {
@@ -201,6 +245,15 @@ public class Planner {
             .filter(pw -> !pw.week.startDate.isAfter(date))
             .filter(pw -> !pw.week.endDate.isBefore(date))
             .collect(Collectors.toList());
+    }
+
+    private PersonWeek getPlanForPersonWeek(TeamMember teamMember, LocalDate date) {
+        return plan.stream()
+                .filter(pw -> pw.person == teamMember)
+                .filter(pw -> !pw.week.startDate.isAfter(date))
+                .filter(pw -> !pw.week.endDate.isBefore(date))
+                .findFirst()
+                .get();
     }
 
     private List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {

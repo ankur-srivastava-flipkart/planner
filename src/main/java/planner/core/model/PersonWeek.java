@@ -15,4 +15,8 @@ public class PersonWeek {
         return String.format("%s:(%d)", this.description, this.leaves);
     }
 
+    public int unoccupied() {
+        return 5 - leaves - occupied;
+    }
+
 }
