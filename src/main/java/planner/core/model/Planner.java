@@ -14,7 +14,6 @@ import org.joda.time.LocalDate;
  */
 public class Planner {
 
-    public static final String LEAVE = "Leave";
     public static final String ONCALL = "Oncall";
     ArrayList<PersonWeek> plan= new ArrayList<>();
     List<Week> weeks = new ArrayList<>();
@@ -141,15 +140,27 @@ public class Planner {
     }
 
     private void swapOncall(PersonWeek personWeek) {
-        PersonWeek candidateForOncallSwap = getPlanForWeek(personWeek.week.startDate)
-            .stream()
-            .filter(pw -> pw.leaves == 0)
-            .findAny()
-            .get();
-        candidateForOncallSwap.description = "Oncall";
-//        Week oncallWeek = getPlanForCandidate(candidateForOncallSwap.person)
-//            .stream()
-//            .filter()
+        try {
+            PersonWeek candidateForOncallSwap = getPlanForWeek(personWeek.week.startDate)
+                .stream()
+                .filter(pw -> pw.leaves == 0)
+                .findAny()
+                .get();
+            personWeek.description = "";
+            candidateForOncallSwap.description = ONCALL;
+            PersonWeek oncallWeek = getPlanForCandidate(candidateForOncallSwap.person)
+                .stream()
+                .filter(pw -> pw.description.contains(ONCALL))
+                .findFirst().get();
+            oncallWeek.description = "";
+            getPlanForCandidate(personWeek.person)
+                .stream()
+                .filter(pw -> pw.week.weekNumber == oncallWeek.week.weekNumber)
+                .findAny()
+                .get().description = ONCALL;
+        } catch (Exception e) {
+            System.out.println("ERROR : Could not swap oncall");
+        }
     }
 
     private List<PersonWeek> getPlanForWeek(LocalDate date) {
