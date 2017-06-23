@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -12,6 +13,7 @@ import org.joda.time.LocalDate;
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
+@Singleton
 public class Planner {
 
     public static final String ONCALL = "Oncall";
@@ -28,13 +30,8 @@ public class Planner {
 
     public void updateOKR(String okrs) {
         List<Okr> okrList = Arrays.stream(okrs.split("\\*"))
-                .map(e -> new Okr(e))
-                .sorted(new Comparator<Okr>() {
-                    @Override
-                    public int compare(Okr o1, Okr o2) {
-                        return o2.priority - o1.priority;
-                    }
-                })
+                .map(Okr::new)
+                .sorted((o1, o2) -> o2.priority - o1.priority)
                 .collect(Collectors.toList());
 
     }
@@ -64,11 +61,10 @@ public class Planner {
         }
         System.out.println();
         for (TeamMember member : TeamMember.values()) {
-            System.out.print(member.name() + ",");
             String row = plan.stream().filter(pw -> pw.person == member)
                     .sorted((o1, o2) -> (o2.week.weekNumber - o1.week.weekNumber))
                     .map(pw -> pw.description)
-                    .reduce("", (a, b) -> a + "," + b);
+                    .reduce(member.name(), (a, b) -> a + "," + b);
             System.out.print(row);
             System.out.println();
         }
