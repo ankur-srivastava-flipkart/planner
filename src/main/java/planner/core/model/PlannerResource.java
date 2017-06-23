@@ -99,6 +99,8 @@ public class PlannerResource {
         }
         planner.updateOKR(action.param.get("okr"));
         return "Done";
+      case "get_bandwidth":
+        return String.valueOf(planner.getBandwidth());
       default: return "Action Not Supported";
     }
     return null;

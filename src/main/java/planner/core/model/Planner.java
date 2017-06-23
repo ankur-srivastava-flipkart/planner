@@ -326,6 +326,12 @@ public class Planner {
                 .get();
     }
 
+    public int getBandwidth() {
+        return plan.stream()
+            .mapToInt(PersonWeek::unoccupied)
+            .sum();
+    }
+
     public List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {
         return plan.stream()
             .filter(pw -> pw.person == teamMember)

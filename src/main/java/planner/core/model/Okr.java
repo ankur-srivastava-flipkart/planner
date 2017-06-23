@@ -14,6 +14,11 @@ public class Okr {
     int status = 0;
     boolean willSpill = false;
 
+    @Override
+    public String toString() {
+        return this.description;
+    }
+
     public Okr(String e) {
         try {
             String[] split = e.split(":");

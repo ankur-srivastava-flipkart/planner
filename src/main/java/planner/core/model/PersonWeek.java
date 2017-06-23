@@ -34,7 +34,7 @@ public class PersonWeek {
             text += "D:" + description + ", </br>";
         }
         if(!okrList.isEmpty()){
-            text += okrList.stream().map(e -> e.description).reduce("", (a,b) -> a + "O:" + b + ", ");
+            text += okrList.stream().map(e -> e.description + " and slip = " + e.willSpill).reduce("", (a,b) -> a + "O:" + b + ", ");
         }
         return text.trim();
     }
