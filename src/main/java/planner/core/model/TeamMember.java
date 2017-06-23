@@ -12,15 +12,15 @@ public enum TeamMember {
     ALI("Ali", 0.4F, SDE3),
     MEGHA("Megha", 0.8F, SDE1),
     SURYA("Surya", 0.8F, SDE1),
-    KIRAN("Kiran", 0.8F, PSE2),
-    SHRIDHAR("Shridhar", 0.8F, PSE2),
+    KIRAN("Kiran", 0.5F, PSE2),
+    SHRIDHAR("Shridhar", 0.5F, PSE2),
     NANDHA("Nandha", 0.8F, SDE1),
     VIVEK("Vivek", 0.07F, SDE2),
     TEJESWAR("TEJESWAR",0.7F, SDE2);
 
-   private String name;
-    private float productivity;
-    private Level level;
+    public String name;
+    public float productivity;
+    public Level level;
 
      TeamMember(String name, float productivity, Level level) {
          this.name = name;

@@ -19,6 +19,8 @@ public class Planner {
     ArrayList<PersonWeek> plan= new ArrayList<>();
     List<Week> weeks = new ArrayList<>();
 
+    int status = 0;
+
 
     public Planner(String quarter) {
         populateWeeks(quarter);
@@ -38,8 +40,32 @@ public class Planner {
                 })
                 .collect(Collectors.toList());
 
+        for (Okr eachOkr : okrList) {
+            if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=3) {
+                eachOkr.willSpill = blockPeople(Level.PSE2, eachOkr, true);
+            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=10) {
+                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, true);
+            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays >10) {
+                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, false);
+            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays <=10) {
+                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, true);
+            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays >10) {
+                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, false);
+            } else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays <=10) {
+                eachOkr.willSpill = blockPeople(Level.SDE2, eachOkr, true);
+            }  else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays > 10) {
+                eachOkr.willSpill = blockPeople(Level.SDE2, eachOkr, false);
+            }
+
+        }
+    }
+
+    private boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
+
+        Arrays.stream(TeamMember.values()).filter(tm -> tm.level.ordinal() >= levelOnwards.ordinal());
 
 
+        return false;
     }
 
     private void populateOncall() {
@@ -56,6 +82,7 @@ public class Planner {
                 throw new RuntimeException("More than one weeks matched");
             }
             matchedWeeks.get(0).description = "Oncall";
+            matchedWeeks.get(0).occupied = 5 - matchedWeeks.get(0).leaves;
             i = i+1;
         }
     }

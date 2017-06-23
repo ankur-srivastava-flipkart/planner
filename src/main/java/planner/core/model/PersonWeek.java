@@ -9,4 +9,5 @@ public class PersonWeek {
     Week week;
     String description;
     int leaves = 0;
+    int occupied = 0;
 }
