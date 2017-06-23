@@ -25,6 +25,19 @@ public class Planner {
         printPlan();
     }
 
+    public void updateOKR(String okrs) {
+        List<Okr> okrList = Arrays.stream(okrs.split("\\*"))
+                .map(e -> new Okr(e))
+                .sorted(new Comparator<Okr>() {
+                    @Override
+                    public int compare(Okr o1, Okr o2) {
+                        return o2.priority - o1.priority;
+                    }
+                })
+                .collect(Collectors.toList());
+
+    }
+
     private void populateOncall() {
         int i = 0;
         for (Week week : weeks) {
@@ -73,7 +86,6 @@ public class Planner {
                 personWeek.week = week;
                 plan.add(personWeek);
             }
-
         }
     }
 
