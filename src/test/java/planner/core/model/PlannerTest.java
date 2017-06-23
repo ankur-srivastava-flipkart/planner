@@ -56,8 +56,8 @@ public class PlannerTest {
 
         Planner amj = new Planner("AMJ");
 
-        Okr okr = new Okr("okr:jir1:60:COMPLEX:1:10");
-        Okr okr1 = new Okr("okr1:jir1:60:COMPLEX:1:10");
+        Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:10");
+        Okr okr1 = new Okr("GST:jir1:60:COMPLEX:1:10");
         amj.printPlan();
 
         amj.blockPeople(Level.SDE2, okr, false);
@@ -66,6 +66,8 @@ public class PlannerTest {
 
         amj.blockPeople(Level.PSE1, okr1, false);
         amj.printPlan();
+
+        System.out.println(amj.getPlanAsHtml());
 
     }
 

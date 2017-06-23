@@ -20,6 +20,17 @@ public class PersonWeek {
         return String.format("%s:(%d):(%d):(%s)", this.description, this.leaves, this.occupied, okrList.stream().map(e -> e.description + " - " + e.willSpill).reduce("",(a,b) -> a+ " ^ " +b));
     }
 
+    public String getPrettyHtmlDescription() {
+        String text = "L:" + leaves + ", O:" + occupied + ", </br>";
+        if(description.length() > 0) {
+            text += "D:" + description + ", </br>";
+        }
+        if(!okrList.isEmpty()){
+            text += okrList.stream().map(e -> e.description).reduce("", (a,b) -> a + "O:" + b + ", ");
+        }
+        return text.trim();
+    }
+
     public int unoccupied() {
         return 5 - leaves - occupied;
     }

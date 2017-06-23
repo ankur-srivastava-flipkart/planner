@@ -10,5 +10,6 @@ public class PlannerMain {
     planner.addLeave(TeamMember.SHIKHAR, new LocalDate("2016-12-30"), new LocalDate("2017-01-05"));
     planner.addLeave(TeamMember.AMIT, new LocalDate("2016-12-30"), new LocalDate("2017-01-05"));
     planner.printPlan();
+    System.out.println(planner.getPlanAsHtml());
   }
 }

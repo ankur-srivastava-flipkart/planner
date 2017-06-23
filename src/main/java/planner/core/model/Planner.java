@@ -29,6 +29,16 @@ public class Planner {
         //printPlan();
     }
 
+    public void reset(String quarter){
+        plan = new ArrayList<>();
+        weeks = new ArrayList<>();
+        status = 0;
+        populateWeeks(quarter);
+        populatePlan();
+        populateOncall();
+        //printPlan();
+    }
+
     public void updateOKR(String okrs) {
         List<Okr> okrList = Arrays.stream(okrs.split("\\*"))
                 .map(Okr::new)
@@ -169,6 +179,30 @@ public class Planner {
             System.out.print(row);
             System.out.println();
         }
+    }
+
+    public String getPlanAsHtml() {
+        String html = "<html>";
+        html += "<style type=\"text/css\">td {border:1px solid grey;} th {border:1px solid grey;} table {border:1px solid grey;}</style>";
+        html += "<body>";
+        html += "<table>";
+        html += "<tr>";
+        html += "<th>Employee/Week</th>";
+        for (Week week : weeks) {
+            html += "<th>" + week.startDate  + " : " + week.endDate + "</th>";
+        }
+        html += "</tr>";
+        for (TeamMember member : TeamMember.values()) {
+            String row = plan.stream().filter(pw -> pw.person == member)
+                .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
+                .map(PersonWeek::getPrettyHtmlDescription)
+                .reduce("<td>" + member.name() + "</td>", (a, b) -> a + "<td>" + b + "</td>");
+            html += "<tr>" + row + "</tr>";
+        }
+        html += "</table>";
+        html += "<body>";
+        html += "</html>";
+        return html;
     }
 
     private void populatePlan() {
