@@ -1,19 +1,19 @@
 package planner.core.model;
 
-import com.opencsv.CSVWriter;
-import org.joda.time.*;
-
-import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.joda.time.DateTimeConstants;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
 public class Planner {
+
+    public static final String LEAVE = "Leave";
+    public static final String ONCALL = "Oncall";
     ArrayList<PersonWeek> plan= new ArrayList<>();
     List<Week> weeks = new ArrayList<>();
 
@@ -119,5 +119,39 @@ public class Planner {
             throw new RuntimeException("Invalid quarter");
         }
         return month;
+    }
+
+    private void addLeave(TeamMember teamMember, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+        List<PersonWeek> weeksOfInterest = plan.stream()
+            .filter(personWeek -> personWeek.person == teamMember)
+            .filter(personWeek -> !personWeek.week.startDate.isAfter(leaveEndDate)
+                || !personWeek.week.endDate.isBefore(leaveStartDate))
+            .collect(Collectors.toList());
+        for (PersonWeek personWeek : weeksOfInterest) {
+            if (personWeek.description.contains(ONCALL)) {
+                swapOncall(personWeek);
+            }
+            LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
+            LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
+            int noOfLeaveDays = Days.daysBetween(leaveStartDate, leaveEndInWeek).getDays() + 1;
+            personWeek.description += String.format("%s for %s days", LEAVE, noOfLeaveDays);
+        }
+    }
+
+    private void swapOncall(PersonWeek personWeek) {
+        PersonWeek candidateForOncallSwap = getPlanForWeek(personWeek.week.startDate)
+            .stream()
+            .filter(pw -> !pw.description.contains(LEAVE))
+            .findAny()
+            .get();
+        String taskForSwappingCandidate = candidateForOncallSwap.description;
+
+    }
+
+    private List<PersonWeek> getPlanForWeek(LocalDate date) {
+        return plan.stream()
+            .filter(pw -> !pw.week.startDate.isAfter(date))
+            .filter(pw -> !pw.week.endDate.isBefore(date))
+            .collect(Collectors.toList());
     }
 }
