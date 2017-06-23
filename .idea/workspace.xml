@@ -2,14 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="da772ef6-e3cf-469f-ba7b-ae20096b9aa8" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Complexity.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Complexity.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Level.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Level.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Okr.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Okr.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/TeamMember.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/TeamMember.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -106,8 +99,8 @@
       <file leaf-file-name="Planner.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="294">
-              <caret line="56" column="69" lean-forward="false" selection-start-line="56" selection-start-column="69" selection-end-line="56" selection-end-column="69" />
+            <state relative-caret-position="264">
+              <caret line="52" column="69" lean-forward="false" selection-start-line="52" selection-start-column="69" selection-end-line="52" selection-end-column="69" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -173,8 +166,8 @@
       <file leaf-file-name="PersonWeek.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="11" column="21" lean-forward="true" selection-start-line="11" selection-start-column="21" selection-end-line="11" selection-end-column="21" />
+            <state relative-caret-position="150">
+              <caret line="10" column="19" lean-forward="true" selection-start-line="10" selection-start-column="19" selection-end-line="10" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -1068,7 +1061,7 @@
       <option name="presentableId" value="Default" />
       <updated>1498157981033</updated>
       <workItem from="1498157984133" duration="14683000" />
-      <workItem from="1498177339639" duration="4896000" />
+      <workItem from="1498177339639" duration="5023000" />
     </task>
     <task id="LOCAL-00001" summary="fixed oncall mapping">
       <created>1498174573867</created>
@@ -1098,7 +1091,21 @@
       <option name="project" value="LOCAL" />
       <updated>1498177604430</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="add OKR planning">
+      <created>1498182417098</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1498182417098</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Merge branch 'master' of https://github.com/ankur-srivastava-flipkart/planner&#10;&#10;# Conflicts:&#10;#&#9;src/main/java/planner/core/model/PersonWeek.java">
+      <created>1498182502325</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1498182502325</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1134,7 +1141,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="19579000" />
+    <option name="totallyTimeSpent" value="19706000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1226,7 +1233,9 @@
     <MESSAGE value="fixed oncall mapping" />
     <MESSAGE value="add to .ignore" />
     <MESSAGE value="fix planner imports." />
-    <option name="LAST_COMMIT_MESSAGE" value="fix planner imports." />
+    <MESSAGE value="add OKR planning" />
+    <MESSAGE value="Merge branch 'master' of https://github.com/ankur-srivastava-flipkart/planner&#10;&#10;# Conflicts:&#10;#&#9;src/main/java/planner/core/model/PersonWeek.java" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge branch 'master' of https://github.com/ankur-srivastava-flipkart/planner&#10;&#10;# Conflicts:&#10;#&#9;src/main/java/planner/core/model/PersonWeek.java" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -1539,8 +1548,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="21" lean-forward="true" selection-start-line="11" selection-start-column="21" selection-end-line="11" selection-end-column="21" />
+        <state relative-caret-position="150">
+          <caret line="10" column="19" lean-forward="true" selection-start-line="10" selection-start-column="19" selection-end-line="10" selection-end-column="19" />
           <folding />
         </state>
       </provider>
@@ -1555,8 +1564,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="294">
-          <caret line="56" column="69" lean-forward="false" selection-start-line="56" selection-start-column="69" selection-end-line="56" selection-end-column="69" />
+        <state relative-caret-position="264">
+          <caret line="52" column="69" lean-forward="false" selection-start-line="52" selection-start-column="69" selection-end-line="52" selection-end-column="69" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
