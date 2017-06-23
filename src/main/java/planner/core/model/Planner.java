@@ -194,9 +194,13 @@ public class Planner {
                     .get();
                 if (requesterOncallWeek.leaves == 0) {
                     requesterOncallWeek.description = ONCALL;
+                    requesterOncallWeek.occupied = 5;
                     requesteeOncallWeek.description = "";
+                    requesteeOncallWeek.occupied = 0;
                     requesterCurrentWeek.description = "";
+                    requesterCurrentWeek.occupied = 0;
                     requesteeCurrentWeek.description = ONCALL;
+                    requesteeCurrentWeek.occupied = 5;
                     break;
                 }
             }
