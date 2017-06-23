@@ -7,6 +7,10 @@ package planner.core.model;
 public class PersonWeek {
     TeamMember person;
     Week week;
-    String description;
+    String description = "";
     int leaves = 0;
+
+    public String getDescriptionWithLeaves() {
+        return String.format("%s:(%d)", this.description, this.leaves);
+    }
 }
