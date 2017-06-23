@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -27,7 +28,7 @@ public class Planner {
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
-        printPlan();
+        //printPlan();
     }
 
     public void updateOKR(String okrs) {
@@ -156,9 +157,14 @@ public class Planner {
             if (personWeek.description.contains(ONCALL)) {
                 swapOncall(personWeek);
             }
+            long noOfLeaveDays = 0;
             LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
             LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
-            int noOfLeaveDays = Days.daysBetween(leaveStartInWeek, leaveEndInWeek).getDays() + 1;
+            for (LocalDate date = leaveStartInWeek; !date.isAfter(leaveEndInWeek); date = date.plusDays(1)) {
+                if (date.toDateTimeAtCurrentTime().getDayOfWeek() <= 5) {
+                    noOfLeaveDays++;
+                }
+            }
             personWeek.leaves += noOfLeaveDays;
         }
     }
