@@ -43,7 +43,7 @@ public class Permute {
 
   // The main function that prints all combinations of size r
   // in arr[] of size n. This function mainly uses combinationUtil()
-  public List<List<Integer>> getCombination(int arr[], int arrLength, int batchSize)
+  private List<List<Integer>> getCombination(int arr[], int arrLength, int batchSize)
   {
     combinations = new ArrayList<>();
 
@@ -54,5 +54,10 @@ public class Permute {
     combinationUtil(arr, data, 0, arrLength-1, 0, batchSize);
 
     return combinations;
+  }
+
+  public static List<List<Integer>> getAllCombinations(int arr[], int arrLength, int batchSize) {
+    Permute permute = new Permute();
+    return permute.getCombination(arr, arrLength, batchSize);
   }
 }
