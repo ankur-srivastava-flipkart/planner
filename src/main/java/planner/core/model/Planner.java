@@ -275,7 +275,7 @@ public class Planner {
             || (!week.endDate.isBefore(leaveStartDate) && !week.endDate.isAfter(leaveEndDate));
     }
 
-    private void swapOncall(PersonWeek requesterCurrentWeek) {
+    public void swapOncall(PersonWeek requesterCurrentWeek) {
         try {
             List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.startDate)
                 .stream()
@@ -310,14 +310,14 @@ public class Planner {
         }
     }
 
-    private List<PersonWeek> getPlanForWeek(LocalDate date) {
+    public List<PersonWeek> getPlanForWeek(LocalDate date) {
         return plan.stream()
             .filter(pw -> !pw.week.startDate.isAfter(date))
             .filter(pw -> !pw.week.endDate.isBefore(date))
             .collect(Collectors.toList());
     }
 
-    private PersonWeek getPlanForPersonWeek(TeamMember teamMember, LocalDate date) {
+    public PersonWeek getPlanForPersonWeek(TeamMember teamMember, LocalDate date) {
         return plan.stream()
                 .filter(pw -> pw.person == teamMember)
                 .filter(pw -> !pw.week.startDate.isAfter(date))
@@ -326,9 +326,19 @@ public class Planner {
                 .get();
     }
 
-    private List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {
+    public List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {
         return plan.stream()
             .filter(pw -> pw.person == teamMember)
             .collect(Collectors.toList());
+    }
+
+    public String getOncall(LocalDate date) {
+        return plan.stream()
+            .filter(pw -> !pw.week.startDate.isAfter(date))
+            .filter(pw -> !pw.week.endDate.isBefore(date))
+            .filter(pw -> pw.description.contains("Oncall"))
+            .findAny()
+            .get()
+            .person.name;
     }
 }

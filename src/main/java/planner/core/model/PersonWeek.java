@@ -16,6 +16,14 @@ public class PersonWeek {
     int occupied = 0;
     List<Okr> okrList = new ArrayList<>();
 
+    @Override
+    public String toString() {
+        return "person=" + person +
+            ", description='" + description + '\'' +
+            ", leaves=" + leaves +
+            ", okrList=" + okrList;
+    }
+
     public String getDescriptionWithLeaves() {
         return String.format("%s:(%d):(%d):(%s)", this.description, this.leaves, this.occupied, okrList.stream().map(e -> e.description + " - " + e.willSpill).reduce("",(a,b) -> a+ " ^ " +b));
     }
