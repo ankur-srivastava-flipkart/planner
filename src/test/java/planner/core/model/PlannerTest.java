@@ -21,7 +21,65 @@ public class PlannerTest {
 
     @Test
     public void testWeeks() {
-       new Planner("AMJ");
+        new Planner("AMJ");
+    }
+
+    @Test
+    public void testBlockPeople() {
+
+        Planner amj = new Planner("AMJ");
+
+        Okr okr = new Okr("okr1:jir1:20:COMPLEX:1:3");
+
+
+        amj.blockPeople(Level.SDE2, okr, false);
+        amj.printPlan();
+
+    }
+
+
+    @Test
+    public void testBlockPeople1() {
+
+        Planner amj = new Planner("AMJ");
+
+        Okr okr = new Okr("okr1:jir1:400:COMPLEX:1:3");
+
+
+       Assert.assertTrue(amj.blockPeople(Level.SDE2, okr, false));
+        amj.printPlan();
+
+    }
+
+    @Test
+    public void testBlockPeople2() {
+
+        Planner amj = new Planner("AMJ");
+
+        Okr okr = new Okr("okr:jir1:60:COMPLEX:1:10");
+        Okr okr1 = new Okr("okr1:jir1:60:COMPLEX:1:10");
+        amj.printPlan();
+
+        amj.blockPeople(Level.SDE2, okr, false);
+
+        amj.printPlan();
+
+        amj.blockPeople(Level.PSE1, okr1, false);
+        amj.printPlan();
+
+    }
+
+    @Test
+    public void testBlockPeople3() {
+
+        Planner amj = new Planner("AMJ");
+
+        Okr okr = new Okr("okr:jir1:10:COMPLEX:1:1");
+
+        amj.blockPeople(Level.SDE3, okr, false);
+
+        amj.printPlan();
+
     }
 
 }

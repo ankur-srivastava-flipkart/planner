@@ -9,7 +9,7 @@ public enum TeamMember {
 
     SHIKHAR("Shikhar", 0.7F, SDE2),
     AMIT("Amit", 0.7F, SDE2),
-    ALI("Ali", 0.4F, SDE3),
+    ALI("Ali", 0.5F, SDE3),
     MEGHA("Megha", 0.8F, SDE1),
     SURYA("Surya", 0.8F, SDE1),
     KIRAN("Kiran", 0.5F, PSE2),

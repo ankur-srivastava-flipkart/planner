@@ -55,55 +55,77 @@ public class Planner {
         }
     }
 
-    private boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
-
-        for (int i = 1 ; i <= okr.parallelism ; i++) {
-
-        }
+    public boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
 
         List<List<TeamMember>> allCombinations = new ArrayList<>();
+
+        List<TeamMember> values = Arrays.stream(TeamMember.values()).filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
+
+
+        for (int i = 1 ; i <= okr.parallelism ; i++) {
+            allCombinations.addAll( Permute.getAllCombinations(values.toArray(new TeamMember[values.size()]),values.size(), i));
+        }
+
 
         Map<List<TeamMember>, LocalDate> endDateMap = new HashMap<>();
         for(List<TeamMember> eachCombination : allCombinations) {
             int effortRemaining = okr.effortinPersonDays;
+            Week lastWeek = null;
             for (Week week : weeks) {
-                int totalWeekEffort = 0;
+                double totalWeekEffort = 0;
+
                 for (TeamMember member : eachCombination) {
                     PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
-                    totalWeekEffort += 5 - planForPersonWeek.occupied - planForPersonWeek.leaves;
+                    totalWeekEffort += (5 - planForPersonWeek.occupied - planForPersonWeek.leaves)*member.productivity;
                 }
-                effortRemaining -= totalWeekEffort;
+                effortRemaining -= Math.round(totalWeekEffort);
+                System.out.println(week.weekNumber + " , " + effortRemaining + " - " + totalWeekEffort);
+
                 if (effortRemaining <= 0) {
                     endDateMap.put(eachCombination,week.endDate);
                     break;
                 }
+                lastWeek = week;
             }
+
+            if (effortRemaining > 0) {
+                endDateMap.put(eachCombination,lastWeek.endDate.plusDays(effortRemaining/eachCombination.size()));
+            }
+
         }
 
         Map.Entry<List<TeamMember>, LocalDate> listLocalDateEntry = endDateMap.entrySet().stream().sorted(new Comparator<Map.Entry<List<TeamMember>, LocalDate>>() {
             @Override
             public int compare(Map.Entry<List<TeamMember>, LocalDate> o1, Map.Entry<List<TeamMember>, LocalDate> o2) {
-                return o1.getValue().isAfter(o2.getValue()) ? 1 : -1;
+
+                return o1.getValue().compareTo(o2.getValue());
             }
         }).findFirst().get();
 
-        int efforRemaining = okr.effortinPersonDays;
+        System.out.println(listLocalDateEntry.getKey());
+
+        double efforRemaining = okr.effortinPersonDays;
 
         for (Week week : weeks) {
             for (TeamMember member :  listLocalDateEntry.getKey()) {
                 PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
-                if (efforRemaining >= planForPersonWeek.unoccupied()) {
-                    planForPersonWeek.occupied += planForPersonWeek.unoccupied();
-                    efforRemaining -= planForPersonWeek.unoccupied();
-                } else {
-                    planForPersonWeek.occupied += efforRemaining;
-                    efforRemaining -= efforRemaining;
+                if(planForPersonWeek.unoccupied() == 0 ) {
+                    continue;
                 }
-                if (efforRemaining == 0) {
+                if (efforRemaining >= planForPersonWeek.unoccupied() * member.productivity) {
+                    efforRemaining -= planForPersonWeek.unoccupied() * member.productivity;
+                    planForPersonWeek.occupied += planForPersonWeek.unoccupied();
+                    planForPersonWeek.okrList.add(okr);
+                } else {
+                    planForPersonWeek.occupied += Math.ceil(efforRemaining / member.productivity);
+                    efforRemaining -= efforRemaining;
+                    planForPersonWeek.okrList.add(okr);
+                }
+                if ((int)efforRemaining == 0) {
                     break;
                 }
             }
-            if (efforRemaining == 0) {
+            if ((int)efforRemaining == 0) {
                 break;
             }
         }

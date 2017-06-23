@@ -1,21 +1,41 @@
 group 'planner'
 version '1.0-SNAPSHOT'
 
+
+
+
 apply plugin: 'java'
 apply plugin: 'idea'
+apply plugin: 'shadow'
 
 sourceCompatibility = 1.8
 
+buildscript{
+    repositories {
+        jcenter()
+        maven {
+            name 'shadow'
+            url 'http://dl.bintray.com/content/johnrengelman/gradle-plugins'
+        }
+    }
+    dependencies {
+        classpath 'org.gradle.plugins:shadow:0.7.4'
+    }
+}
 repositories {
     mavenCentral()
+    jcenter()
     maven {
-        url "http://oss.sonatype.org/content/repositories/snapshots"
+        url 'http://oss.sonatype.org/content/repositories/snapshots'
     }
+
+
 
 }
 
-dependencies {
 
+
+dependencies {
         compile "io.dropwizard:dropwizard-bom:0.9.1"
         compile "io.dropwizard:dropwizard-core:+"
         compile "io.dropwizard:dropwizard-auth:+"
