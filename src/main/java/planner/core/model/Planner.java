@@ -26,7 +26,7 @@ public class Planner {
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
-        //printPlan();
+        printPlan();
     }
 
     public void reset(String quarter){
@@ -36,7 +36,7 @@ public class Planner {
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
-        //printPlan();
+        printPlan();
     }
 
     public void updateOKR(String okrs) {

@@ -11,6 +11,7 @@ import javax.ws.rs.Produces;
 /**
  * Created by kumar.vivek on 23/06/17.
  */
+@Path("/planner")
 public class PlannerResource {
 
   private Planner planner;
