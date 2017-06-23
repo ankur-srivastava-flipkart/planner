@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="da772ef6-e3cf-469f-ba7b-ae20096b9aa8" name="Default" comment="Merge branch 'master' of https://github.com/ankur-srivastava-flipkart/planner&#10;&#10;# Conflicts:&#10;#&#9;src/main/java/planner/core/model/PersonWeek.java">
+    <list default="true" id="da772ef6-e3cf-469f-ba7b-ae20096b9aa8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/PersonWeek.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -1043,7 +1041,7 @@
       <option name="presentableId" value="Default" />
       <updated>1498157981033</updated>
       <workItem from="1498157984133" duration="14683000" />
-      <workItem from="1498177339639" duration="10584000" />
+      <workItem from="1498177339639" duration="10594000" />
     </task>
     <task id="LOCAL-00001" summary="fixed oncall mapping">
       <created>1498174573867</created>
@@ -1094,7 +1092,14 @@
       <option name="project" value="LOCAL" />
       <updated>1498182536642</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Merge branch 'master' of https://github.com/ankur-srivastava-flipkart/planner&#10;&#10;# Conflicts:&#10;#&#9;src/main/java/planner/core/model/PersonWeek.java">
+      <created>1498188261226</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1498188261226</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TestHistory">
@@ -1130,7 +1135,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="25267000" />
+    <option name="totallyTimeSpent" value="25277000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
