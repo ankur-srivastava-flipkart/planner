@@ -30,3 +30,4 @@ src/test/test.iml
 gradle/
 gradlew
 gradlew.bat
+.idea/*
