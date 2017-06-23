@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Singleton;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -25,7 +26,7 @@ public class Planner {
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
-        printPlan();
+        //printPlan();
     }
 
     public void updateOKR(String okrs) {
@@ -200,9 +201,14 @@ public class Planner {
             if (personWeek.description.contains(ONCALL)) {
                 swapOncall(personWeek);
             }
+            long noOfLeaveDays = 0;
             LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
             LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
-            int noOfLeaveDays = Days.daysBetween(leaveStartInWeek, leaveEndInWeek).getDays() + 1;
+            for (LocalDate date = leaveStartInWeek; !date.isAfter(leaveEndInWeek); date = date.plusDays(1)) {
+                if (date.toDateTimeAtCurrentTime().getDayOfWeek() <= 5) {
+                    noOfLeaveDays++;
+                }
+            }
             personWeek.leaves += noOfLeaveDays;
         }
     }
@@ -215,25 +221,33 @@ public class Planner {
 
     private void swapOncall(PersonWeek requesterCurrentWeek) {
         try {
-            PersonWeek requesteeCurrentWeek = getPlanForWeek(requesterCurrentWeek.week.startDate)
+            List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.startDate)
                 .stream()
                 .filter(pw -> pw.leaves == 0)
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
-                .findAny()
-                .get();
-            PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
-                .stream()
-                .filter(pw -> pw.description.contains(ONCALL))
-                .findFirst().get();
-            PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
-                .stream()
-                .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
-                .findAny()
-                .get();
-            requesterOncallWeek.description = ONCALL;
-            requesteeOncallWeek.description = "";
-            requesterCurrentWeek.description = "";
-            requesteeCurrentWeek.description = ONCALL;
+                .collect(Collectors.toList());
+            for (PersonWeek requesteeCurrentWeek : requesteeCurrentWeeks) {
+                PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
+                    .stream()
+                    .filter(pw -> pw.description.contains(ONCALL))
+                    .findFirst().get();
+                PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
+                    .stream()
+                    .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
+                    .findAny()
+                    .get();
+                if (requesterOncallWeek.leaves == 0) {
+                    requesterOncallWeek.description = ONCALL;
+                    requesterOncallWeek.occupied = 5;
+                    requesteeOncallWeek.description = "";
+                    requesteeOncallWeek.occupied = 0;
+                    requesterCurrentWeek.description = "";
+                    requesterCurrentWeek.occupied = 0;
+                    requesteeCurrentWeek.description = ONCALL;
+                    requesteeCurrentWeek.occupied = 5;
+                    break;
+                }
+            }
 
         } catch (Exception e) {
             System.out.println("ERROR : Could not swap oncall");
