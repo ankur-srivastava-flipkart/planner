@@ -8,4 +8,5 @@ public class PersonWeek {
     TeamMember person;
     Week week;
     String description;
+    int leaves = 0;
 }

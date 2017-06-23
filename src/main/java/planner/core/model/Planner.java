@@ -138,24 +138,32 @@ public class Planner {
             LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
             LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
             int noOfLeaveDays = Days.daysBetween(leaveStartInWeek, leaveEndInWeek).getDays() + 1;
-            personWeek.description += String.format("%s for %s days", LEAVE, noOfLeaveDays);
+            personWeek.leaves += noOfLeaveDays;
         }
     }
 
     private void swapOncall(PersonWeek personWeek) {
         PersonWeek candidateForOncallSwap = getPlanForWeek(personWeek.week.startDate)
             .stream()
-            .filter(pw -> !pw.description.contains(LEAVE))
+            .filter(pw -> pw.leaves == 0)
             .findAny()
             .get();
-        String taskForSwappingCandidate = candidateForOncallSwap.description;
-
+        candidateForOncallSwap.description = "Oncall";
+//        Week oncallWeek = getPlanForCandidate(candidateForOncallSwap.person)
+//            .stream()
+//            .filter()
     }
 
     private List<PersonWeek> getPlanForWeek(LocalDate date) {
         return plan.stream()
             .filter(pw -> !pw.week.startDate.isAfter(date))
             .filter(pw -> !pw.week.endDate.isBefore(date))
+            .collect(Collectors.toList());
+    }
+
+    private List<PersonWeek> getPlanForCandidate(TeamMember teamMember) {
+        return plan.stream()
+            .filter(pw -> pw.person == teamMember)
             .collect(Collectors.toList());
     }
 }
