@@ -121,7 +121,7 @@ public class Planner {
             }
             LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
             LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
-            int noOfLeaveDays = Days.daysBetween(leaveStartDate, leaveEndInWeek).getDays() + 1;
+            int noOfLeaveDays = Days.daysBetween(leaveStartInWeek, leaveEndInWeek).getDays() + 1;
             personWeek.description += String.format("%s for %s days", LEAVE, noOfLeaveDays);
         }
     }
