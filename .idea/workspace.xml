@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="da772ef6-e3cf-469f-ba7b-ae20096b9aa8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" afterPath="$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/.gradle/" />
@@ -99,8 +100,8 @@
       <file leaf-file-name="Planner.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="314">
-              <caret line="39" column="0" lean-forward="true" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+            <state relative-caret-position="269">
+              <caret line="34" column="27" lean-forward="false" selection-start-line="34" selection-start-column="27" selection-end-line="34" selection-end-column="27" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -1036,7 +1037,7 @@
       <option name="presentableId" value="Default" />
       <updated>1498157981033</updated>
       <workItem from="1498157984133" duration="14683000" />
-      <workItem from="1498177339639" duration="276000" />
+      <workItem from="1498177339639" duration="516000" />
     </task>
     <task id="LOCAL-00001" summary="fixed oncall mapping">
       <created>1498174573867</created>
@@ -1102,7 +1103,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="14959000" />
+    <option name="totallyTimeSpent" value="15199000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1459,8 +1460,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/planner/core/model/Planner.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="314">
-          <caret line="39" column="0" lean-forward="true" selection-start-line="39" selection-start-column="0" selection-end-line="39" selection-end-column="0" />
+        <state relative-caret-position="269">
+          <caret line="34" column="27" lean-forward="false" selection-start-line="34" selection-start-column="27" selection-end-line="34" selection-end-column="27" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
