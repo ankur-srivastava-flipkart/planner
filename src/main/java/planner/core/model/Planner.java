@@ -2,9 +2,10 @@ package planner.core.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
@@ -12,9 +13,9 @@ import org.joda.time.LocalDate;
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
+@Singleton
 public class Planner {
 
-    public static final String LEAVE = "Leave";
     public static final String ONCALL = "Oncall";
     ArrayList<PersonWeek> plan= new ArrayList<>();
     List<Week> weeks = new ArrayList<>();
@@ -31,13 +32,8 @@ public class Planner {
 
     public void updateOKR(String okrs) {
         List<Okr> okrList = Arrays.stream(okrs.split("\\*"))
-                .map(e -> new Okr(e))
-                .sorted(new Comparator<Okr>() {
-                    @Override
-                    public int compare(Okr o1, Okr o2) {
-                        return o2.priority - o1.priority;
-                    }
-                })
+                .map(Okr::new)
+                .sorted((o1, o2) -> o2.priority - o1.priority)
                 .collect(Collectors.toList());
 
         for (Okr eachOkr : okrList) {
@@ -94,11 +90,10 @@ public class Planner {
         }
         System.out.println();
         for (TeamMember member : TeamMember.values()) {
-            System.out.print(member.name() + ",");
             String row = plan.stream().filter(pw -> pw.person == member)
-                    .sorted((o1, o2) -> (o2.week.weekNumber - o1.week.weekNumber))
-                    .map(pw -> pw.description)
-                    .reduce("", (a, b) -> a + "," + b);
+                    .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
+                    .map(PersonWeek::getDescriptionWithLeaves)
+                    .reduce(member.name(), (a, b) -> a + "," + b);
             System.out.print(row);
             System.out.println();
         }
@@ -152,11 +147,10 @@ public class Planner {
         return month;
     }
 
-    private void addLeave(TeamMember teamMember, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+    public void addLeave(TeamMember teamMember, LocalDate leaveStartDate, LocalDate leaveEndDate) {
         List<PersonWeek> weeksOfInterest = plan.stream()
             .filter(personWeek -> personWeek.person == teamMember)
-            .filter(personWeek -> !personWeek.week.startDate.isAfter(leaveEndDate)
-                || !personWeek.week.endDate.isBefore(leaveStartDate))
+            .filter(personWeek -> isOverlappingWithLeaves(personWeek.week, leaveStartDate, leaveEndDate))
             .collect(Collectors.toList());
         for (PersonWeek personWeek : weeksOfInterest) {
             if (personWeek.description.contains(ONCALL)) {
@@ -169,16 +163,37 @@ public class Planner {
         }
     }
 
-    private void swapOncall(PersonWeek personWeek) {
-        PersonWeek candidateForOncallSwap = getPlanForWeek(personWeek.week.startDate)
-            .stream()
-            .filter(pw -> pw.leaves == 0)
-            .findAny()
-            .get();
-        candidateForOncallSwap.description = "Oncall";
-//        Week oncallWeek = getPlanForCandidate(candidateForOncallSwap.person)
-//            .stream()
-//            .filter()
+    private boolean isOverlappingWithLeaves(Week week, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+        return (!week.startDate.isAfter(leaveStartDate) && !week.endDate.isBefore(leaveEndDate))
+            || (!week.startDate.isBefore(leaveStartDate) && !week.startDate.isAfter(leaveEndDate))
+            || (!week.endDate.isBefore(leaveStartDate) && !week.endDate.isAfter(leaveEndDate));
+    }
+
+    private void swapOncall(PersonWeek requesterCurrentWeek) {
+        try {
+            PersonWeek requesteeCurrentWeek = getPlanForWeek(requesterCurrentWeek.week.startDate)
+                .stream()
+                .filter(pw -> pw.leaves == 0)
+                .filter(pw -> pw.person != requesterCurrentWeek.person)
+                .findAny()
+                .get();
+            PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
+                .stream()
+                .filter(pw -> pw.description.contains(ONCALL))
+                .findFirst().get();
+            PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
+                .stream()
+                .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
+                .findAny()
+                .get();
+            requesterOncallWeek.description = ONCALL;
+            requesteeOncallWeek.description = "";
+            requesterCurrentWeek.description = "";
+            requesteeCurrentWeek.description = ONCALL;
+
+        } catch (Exception e) {
+            System.out.println("ERROR : Could not swap oncall");
+        }
     }
 
     private List<PersonWeek> getPlanForWeek(LocalDate date) {
@@ -188,7 +203,7 @@ public class Planner {
             .collect(Collectors.toList());
     }
 
-    private List<PersonWeek> getPlanForCandidate(TeamMember teamMember) {
+    private List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {
         return plan.stream()
             .filter(pw -> pw.person == teamMember)
             .collect(Collectors.toList());
