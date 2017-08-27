@@ -1,17 +1,12 @@
 group 'planner'
 version '1.0-SNAPSHOT'
 
-
-
-
-apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'shadow'
 
-sourceCompatibility = 1.8
-
-buildscript{
+buildscript {
     repositories {
+        mavenCentral()
         jcenter()
         maven {
             name 'shadow'
@@ -22,22 +17,26 @@ buildscript{
         classpath 'org.gradle.plugins:shadow:0.7.4'
     }
 }
-repositories {
-    mavenCentral()
-    jcenter()
-    maven {
-        url 'http://oss.sonatype.org/content/repositories/snapshots'
+
+
+subprojects {
+    apply plugin: 'java'
+
+    sourceCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            url 'http://oss.sonatype.org/content/repositories/snapshots'
+        }
+
+        ext.mainClassName = 'com.example.helloworld.HelloWorldApplication'
+        ext.configFile = 'src/main/resources/example.yml'
+
     }
 
-  ext.mainClassName = 'com.example.helloworld.HelloWorldApplication'
-  ext.configFile = 'src/main/resources/example.yml'
-
-
-}
-
-
-
-dependencies {
+    dependencies {
         compile "io.dropwizard:dropwizard-bom:0.9.1"
         compile "io.dropwizard:dropwizard-core:+"
         compile "io.dropwizard:dropwizard-auth:+"
@@ -48,14 +47,17 @@ dependencies {
         compile "io.dropwizard:dropwizard-views-freemarker:+"
         compile "io.dropwizard:dropwizard-views-mustache:+"
         compile "io.dropwizard:dropwizard-metrics-graphite:+"
+        compile "com.hubspot.dropwizard:dropwizard-guice:+"
+        compile "com.google.inject:guice:3.0"
         compile "com.h2database:h2:+"
+        compileOnly "org.projectlombok:lombok:1.16.16"
+        compile "mysql:mysql-connector-java:5.1.36"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
         compile 'com.opencsv:opencsv:3.9'
-
-
         testCompile "io.dropwizard:dropwizard-testing:+"
         testCompile "org.mockito:mockito-core:+"
         testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:+"
         testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2:+"
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
 }

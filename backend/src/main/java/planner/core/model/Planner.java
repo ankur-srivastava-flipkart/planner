@@ -2,11 +2,9 @@ package planner.core.model;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.inject.Singleton;
-import org.joda.time.DateTime;
+
 import org.joda.time.DateTimeConstants;
-import org.joda.time.Days;
 import org.joda.time.LocalDate;
 
 /**
