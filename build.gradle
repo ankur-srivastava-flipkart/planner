@@ -38,23 +38,26 @@ subprojects {
 
     dependencies {
         compile "io.dropwizard:dropwizard-bom:0.9.1"
-        compile "io.dropwizard:dropwizard-core:+"
-        compile "io.dropwizard:dropwizard-auth:+"
-        compile "io.dropwizard:dropwizard-assets:+"
-        compile "io.dropwizard:dropwizard-http2:+"
-        compile "io.dropwizard:dropwizard-hibernate:+"
-        compile "io.dropwizard:dropwizard-migrations:+"
-        compile "io.dropwizard:dropwizard-views-freemarker:+"
-        compile "io.dropwizard:dropwizard-views-mustache:+"
-        compile "io.dropwizard:dropwizard-metrics-graphite:+"
+        compile "io.dropwizard:dropwizard-core:1.1.4"
+        compile "io.dropwizard:dropwizard-auth:1.1.4"
+        compile "io.dropwizard:dropwizard-assets:1.1.4"
+        compile "io.dropwizard:dropwizard-http2:1.1.4"
+        compile "io.dropwizard:dropwizard-hibernate:1.1.4"
+        compile "io.dropwizard:dropwizard-migrations:1.1.4"
+        compile "io.dropwizard:dropwizard-views-freemarker:1.1.4"
+        compile "io.dropwizard:dropwizard-views-mustache:1.1.4"
+        compile "io.dropwizard:dropwizard-metrics-graphite:1.1.4"
         compile "com.hubspot.dropwizard:dropwizard-guice:+"
         compile "com.google.inject:guice:3.0"
         compile "com.h2database:h2:+"
-        compileOnly "org.projectlombok:lombok:1.16.16"
+        compile "org.projectlombok:lombok:1.16.16"
         compile "mysql:mysql-connector-java:5.1.36"
         compile group: 'joda-time', name: 'joda-time', version: '2.3'
         compile 'com.opencsv:opencsv:3.9'
-        testCompile "io.dropwizard:dropwizard-testing:+"
+        compile ('io.swagger:swagger-jersey2-jaxrs:1.5.10')
+        compile ('io.swagger:swagger-jaxrs:1.5.10')
+        compile ('io.swagger:swagger-annotations:1.5.10')
+        testCompile "io.dropwizard:dropwizard-testing:1.1.4"
         testCompile "org.mockito:mockito-core:+"
         testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-inmemory:+"
         testCompile "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2:+"
