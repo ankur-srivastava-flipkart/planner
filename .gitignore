@@ -30,5 +30,12 @@ src/test/test.iml
 gradle/
 gradlew
 gradlew.bat
+.gradle
 .idea/*
 .idea
+*.iml
+*.ipr
+*.iws
+build/*
+out/*
+*.jar
