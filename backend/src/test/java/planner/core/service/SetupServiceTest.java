@@ -7,7 +7,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import planner.core.dto.CreatePersonRequest;
+import planner.core.dto.CreateTeamRequest;
 import planner.core.model.Person;
+import planner.core.model.Team;
 import planner.core.repository.PersonRepository;
 import planner.core.repository.TeamRespository;
 
@@ -17,7 +19,7 @@ import java.util.List;
 public class SetupServiceTest {
 
     @Rule
-    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).build();
+    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).build();
 
     private SetupService service;
 
@@ -38,8 +40,30 @@ public class SetupServiceTest {
 
     }
 
+    @Test
+    public void testCreateTeam() {
+        CreateTeamRequest createTeamRequest = new CreateTeamRequest();
+        createTeamRequest.setTeamName("OFF");
+        createTeamRequest.setEm("ankur");
+        createTeamRequest.setTeamMembers(Lists.newArrayList("megha","kiran"));
+
+        Team team = database.inTransaction(() -> {
+            service.createPeople(getDummyPeople());
+            return service.createTeam(createTeamRequest);
+
+        });
+
+        Assert.assertNotNull(team.getId());
+
+    }
+
     private List<CreatePersonRequest> getDummyPeople() {
-        return Lists.newArrayList(new CreatePersonRequest("Ankur", "abc.def"));
+        return Lists.newArrayList(
+                new CreatePersonRequest("Ankur", "abc.def"),
+                new CreatePersonRequest("megha", "abc1.def1"),
+                new CreatePersonRequest("kiran", "abc2.def2")
+
+        );
     }
 
 }

@@ -14,6 +14,7 @@ import io.swagger.jaxrs.listing.SwaggerSerializers;
 import io.swagger.jersey.listing.ApiListingResourceJSON;
 import planner.core.model.Person;
 import planner.core.model.Planner;
+import planner.core.model.Team;
 import planner.core.resource.PlannerResource;
 
 public class PlannerApplication extends Application<PlannerConfiguration> {
@@ -28,7 +29,7 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
 
 
     private final HibernateBundle<PlannerConfiguration> hibernateBundle
-            = new HibernateBundle<PlannerConfiguration>(Person.class) {
+            = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class) {
         @Override
         public DataSourceFactory getDataSourceFactory(
                 PlannerConfiguration configuration

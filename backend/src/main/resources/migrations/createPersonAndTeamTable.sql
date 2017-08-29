@@ -3,13 +3,19 @@
 
 create table team (
   id int primary key AUTO_INCREMENT,
-  name varchar(255)
+  name varchar(255),
+  em_id int
 );
 
 create table person (
   id int primary key AUTO_INCREMENT,
   name varchar(255),
   email varchar(255)
+);
+
+create table team_person (
+  team_id varchar(255),
+  teamMember_id varchar(255)
 );
 
 --rollback drop table team

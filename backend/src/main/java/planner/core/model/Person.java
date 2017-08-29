@@ -16,7 +16,7 @@ import javax.persistence.*;
                 query = "select p from Person p"),
         @NamedQuery(name = "planner.core.model.person.findByName",
                 query = "select p from Person p"
-                        + " where p.name LIKE '%:name%'")
+                        + " where p.name LIKE :name")
 })
 @NoArgsConstructor
 public class Person {

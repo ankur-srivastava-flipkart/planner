@@ -26,7 +26,15 @@ public class SetupService {
     }
 
     public Team createTeam(CreateTeamRequest createTeamRequest) {
-        return null;
+        Person em = personRepository.getPersonByName(createTeamRequest.getEm());
+        List<Person> teamMembers = createTeamRequest.getTeamMembers().stream()
+                .map(tm -> personRepository.getPersonByName(tm))
+                .collect(Collectors.toList());
+
+        Team team = new Team(createTeamRequest.getTeamName(), em, teamMembers);
+        teamRespository.createTeam(team);
+
+        return team;
     }
 
     public List<Person> createPeople (List<CreatePersonRequest> people) {

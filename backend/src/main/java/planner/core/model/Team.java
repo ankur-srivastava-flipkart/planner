@@ -1,9 +1,10 @@
 package planner.core.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.List;
 
 /**
  * Created by ankur.srivastava on 26/08/17.
@@ -11,10 +12,22 @@ import javax.persistence.Id;
 
 @Entity
 @Data
+@NoArgsConstructor
 public class Team {
     @Id
-    private String id;
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private Integer id;
     private String name;
+
+    @ManyToOne
     private Person em;
 
+    @OneToMany
+    List<Person> teamMember;
+
+    public Team(String teamName, Person em, List<Person> teamMembers) {
+        this.name=teamName;
+        this.em = em;
+        this.teamMember=teamMembers;
+    }
 }

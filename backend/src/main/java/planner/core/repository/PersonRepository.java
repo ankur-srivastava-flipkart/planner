@@ -25,4 +25,9 @@ public class PersonRepository extends AbstractDAO<Person>{
     public List<Person> getAllPeople() {
         return list(namedQuery("planner.core.model.person.findAll"));
     }
+
+    public Person getPersonByName(String em) {
+        return uniqueResult(namedQuery("planner.core.model.person.findByName")
+                .setParameter("name","%" + em + "%"));
+    }
 }
