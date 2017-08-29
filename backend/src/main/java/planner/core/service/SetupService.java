@@ -1,5 +1,6 @@
 package planner.core.service;
 
+import org.apache.commons.lang3.StringUtils;
 import planner.core.dto.CreatePersonRequest;
 import planner.core.dto.CreateTeamRequest;
 import planner.core.model.Person;
@@ -51,5 +52,26 @@ public class SetupService {
     public List<Person> getAllPeople() {
         return personRepository.getAllPeople();
 
+    }
+
+    public List<Team> getAllTeams() {
+        return teamRespository.getAllTeams();
+    }
+
+    public List<Team> getTeamByName(String name) {
+        return teamRespository.getTeamsByName(name);
+    }
+
+    public Team removeTeamMember(String teamName, String personName) {
+        Team team = teamRespository.getTeamByName(teamName);
+        team.getTeamMember().removeIf(member -> StringUtils.equalsIgnoreCase(member.getName(), personName));
+
+        return team;
+    }
+
+    public Team addTeamMember(String teamName, String personName) {
+        Team team = teamRespository.getTeamByName(teamName);
+        team.getTeamMember().add(personRepository.getPersonByName(personName));
+        return team;
     }
 }

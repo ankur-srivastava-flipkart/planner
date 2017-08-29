@@ -13,6 +13,13 @@ import java.util.List;
 @Entity
 @Data
 @NoArgsConstructor
+@NamedQueries({
+        @NamedQuery(name = "planner.core.model.team.findAll",
+                query = "select p from Team p"),
+        @NamedQuery(name = "planner.core.model.team.findByName",
+                query = "select p from Team p"
+                        + " where p.name LIKE :name")
+})
 public class Team {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
