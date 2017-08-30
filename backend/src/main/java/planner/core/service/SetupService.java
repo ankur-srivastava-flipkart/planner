@@ -44,7 +44,7 @@ public class SetupService {
 
     private List<Person> convertPersonEntity(List<CreatePersonRequest> people) {
         List<Person> collect = people.stream()
-                .map(p -> new Person(p.getName(), p.getEmail()))
+                .map(p -> new Person(p.getName(), p.getEmail(), p.getProductivity(), p.getLevel()))
                 .collect(Collectors.toList());
         return collect;
     }
@@ -73,5 +73,14 @@ public class SetupService {
         Team team = teamRespository.getTeamByName(teamName);
         team.getTeamMember().add(personRepository.getPersonByName(personName));
         return team;
+    }
+
+    public Person updatePerson(String personName, CreatePersonRequest personRequest) {
+        Person person = personRepository.getPersonByName(personName);
+        if (!StringUtils.isEmpty(personRequest.getName())) { person.setName(personRequest.getName());}
+        if (!StringUtils.isEmpty(personRequest.getEmail())) { person.setEmail(personRequest.getEmail());}
+        if (personRequest.getLevel() != null) { person.setLevel(personRequest.getLevel());}
+        if (personRequest.getProductivity() != null) { person.setProductivity(personRequest.getProductivity());}
+        return person;
     }
 }

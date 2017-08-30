@@ -25,9 +25,20 @@ public class Person {
     private Integer id;
     private String name;
     private String email;
+    public Float productivity;
+
+    @Enumerated(EnumType.STRING)
+    public Level level;
 
     public Person(String name, String email) {
         this.name = name;
         this.email = email;
+    }
+
+    public Person(String name, String email, Float productivity, Level level) {
+        this.name = name;
+        this.email = email;
+        this.productivity = productivity;
+        this.level = level;
     }
 }

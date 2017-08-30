@@ -27,7 +27,6 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
         return "Planner";
     }
 
-
     private final HibernateBundle<PlannerConfiguration> hibernateBundle
             = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class) {
         @Override
@@ -37,9 +36,6 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
             return configuration.getDataSourceFactory();
         }
     };
-
-
-
 
     @Override
     public void initialize(Bootstrap<PlannerConfiguration> bootstrap) {

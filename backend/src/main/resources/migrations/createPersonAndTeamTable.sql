@@ -10,7 +10,9 @@ create table team (
 create table person (
   id int primary key AUTO_INCREMENT,
   name varchar(255),
-  email varchar(255)
+  email varchar(255),
+  level varchar(255),
+  productivity float
 );
 
 create table team_person (

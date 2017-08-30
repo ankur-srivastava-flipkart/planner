@@ -8,9 +8,7 @@ import planner.core.dto.CreatePersonRequest;
 import planner.core.model.Person;
 import planner.core.service.SetupService;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import javax.ws.rs.*;
 import java.util.List;
 
 /**
@@ -38,6 +36,17 @@ public class PeopleResource {
         return setupService.createPeople(people);
     }
 
+    @POST
+    @ApiOperation(value = "Update Person Information",
+            notes = "Update person details",
+            response = Person.class
+    )
+    @UnitOfWork
+    @Path("/{name}")
+    public Person updatePersonInformation(@PathParam("name") String personName, CreatePersonRequest personRequest) {
+        return setupService.updatePerson(personName, personRequest);
+    }
+
     @GET
     @ApiOperation(value = "Get people registered in the app",
             notes = "All Actors (EM, Team members) need to be registered using PUT API",
@@ -48,6 +57,4 @@ public class PeopleResource {
     public List<Person> getAllRegisteredPeople() {
         return setupService.getAllPeople();
     }
-
-
 }

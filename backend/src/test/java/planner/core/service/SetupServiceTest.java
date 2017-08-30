@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import planner.core.dto.CreatePersonRequest;
 import planner.core.dto.CreateTeamRequest;
+import planner.core.model.Level;
 import planner.core.model.Person;
 import planner.core.model.Team;
 import planner.core.repository.PersonRepository;
@@ -54,15 +55,13 @@ public class SetupServiceTest {
         });
 
         Assert.assertNotNull(team.getId());
-
     }
 
     private List<CreatePersonRequest> getDummyPeople() {
         return Lists.newArrayList(
-                new CreatePersonRequest("Ankur", "abc.def"),
-                new CreatePersonRequest("megha", "abc1.def1"),
-                new CreatePersonRequest("kiran", "abc2.def2")
-
+                new CreatePersonRequest("Ankur", "abc.def" , 0.3f, Level.SDE3),
+                new CreatePersonRequest("megha", "abc1.def1", 0.8f, Level.SDE1),
+                new CreatePersonRequest("kiran", "abc2.def2", 0.6f, Level.PSE2)
         );
     }
 

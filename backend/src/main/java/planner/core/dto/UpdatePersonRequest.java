@@ -6,9 +6,8 @@ import planner.core.model.Level;
 
 @Data
 @AllArgsConstructor
-public class CreatePersonRequest {
-    String name;
+public class UpdatePersonRequest {
     String email;
-    public Float productivity;
+    public float productivity;
     public Level level;
 }
