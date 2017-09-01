@@ -21,7 +21,7 @@ public class SetupService {
     private TeamRespository teamRespository;
 
     @Inject
-    SetupService(PersonRepository personRepository, TeamRespository teamRespository) {
+    public SetupService(PersonRepository personRepository, TeamRespository teamRespository) {
         this.personRepository = personRepository;
         this.teamRespository = teamRespository;
     }
@@ -51,8 +51,12 @@ public class SetupService {
 
     public List<Person> getAllPeople() {
         return personRepository.getAllPeople();
-
     }
+
+    public Person getPersonByName(String name) {
+        return personRepository.getPersonByName(name);
+    }
+
 
     public List<Team> getAllTeams() {
         return teamRespository.getAllTeams();

@@ -8,7 +8,7 @@ import java.util.List;
  */
 
 public class PersonWeek {
-    TeamMember person;
+    Person person;
     Week week;
     String description = "";
     int leaves = 0;

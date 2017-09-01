@@ -25,4 +25,5 @@ public class PlannerModule extends AbstractModule{
     public SessionFactory getSessionFactory() {
         return hibernateBundle.getSessionFactory();
     }
+
 }

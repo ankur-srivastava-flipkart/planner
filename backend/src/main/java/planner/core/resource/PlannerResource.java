@@ -1,46 +1,52 @@
 package planner.core.resource;
 
 import com.google.common.collect.Maps;
-import java.util.Map;
+import io.dropwizard.hibernate.UnitOfWork;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.joda.time.LocalDate;
+import planner.core.service.PlanningService;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-
-import org.joda.time.LocalDate;
-import planner.core.model.Planner;
-import planner.core.model.TeamMember;
+import java.util.Map;
 
 /**
  * Created by kumar.vivek on 23/06/17.
  */
-@Path("/planner")
+@Path("/planner/")
 @Singleton
+@Api(value = "Planner for a team")
 public class PlannerResource {
 
-  private Planner planner;
+  private PlanningService planningService;
 
   @Inject
-  public PlannerResource(Planner planner){
-    this.planner = planner;
+  public PlannerResource(PlanningService planningService){
+    this.planningService = planningService;
   }
 
   @GET
   @Path("/plan")
   @Produces("text/html")
+  @ApiOperation(value = "Get the current quarter plan",
+          notes = "Get the current quarter plan",
+          response = String.class
+  )
   public String getQuarterPlan(){
-    return planner.getPlanAsHtml();
+    return planningService.getPlanAsHtml();
   }
 
   @POST
   @Path("/{quarter}/plan/reset")
+  @ApiOperation(value = "Reset Quarter",
+          notes = "Reset Quarter"
+  )
+  @UnitOfWork
   public void resetQuarterPlan(@PathParam("quarter") String quarter){
-    planner.reset(quarter);
+    planningService.reset(quarter);
   }
 
   @GET
@@ -48,72 +54,79 @@ public class PlannerResource {
   public String addOkr(@PathParam("okr") String okr){
 //    Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:5");
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
-    planner.updateOKR(okr);
+    planningService.updateOKR(okr);
     return "Added OKR";
   }
 
   @POST
   @Path("/action")
   @Consumes(MediaType.APPLICATION_JSON)
+  @ApiOperation(value = "Various actions on the plan. ",
+          notes = "Reset Quarter"
+  )
+  @UnitOfWork
   public String takeAction(Action action){
     LocalDate date;
     switch (action.action) {
-      case "fetch_tasks":
-        if (action.param.containsKey("date") && !action.param.get("date").isEmpty()) {
-          date = new LocalDate(action.param.get("date"));
+      case FETCH_TASKS:
+        if (action.param.containsKey(PARAMS.DATE) && !action.param.get(PARAMS.DATE).isEmpty()) {
+          date = new LocalDate(action.param.get(PARAMS.DATE));
         } else {
-          date = new LocalDate(action.param.get("period").split("/")[0]);
+          date = new LocalDate(action.param.get(PARAMS.PERIOD).split("/")[0]);
         }
-        String member = action.param.containsKey("person") && !action.param.get("person").isEmpty() ? action.param.get("person") : action.actor ;
-        TeamMember teamMember = TeamMember.valueOf(member);
-        return planner.getPlanForPersonWeek(teamMember, date).toString();
-      case "init_qtr_plan":
+        String member = action.param.containsKey(PARAMS.PERSON) && !action.param.get(PARAMS.PERSON).isEmpty() ? action.param.get(PARAMS.PERSON) : action.actor ;
+       return planningService.getPlanForPersonWeek(member, date).toString();
+      case INIT_QTR_PLAN:
         if (!action.actor.equals("ANKUR")) {
           return "Sorry! You are not the boss.";
         }
-        planner.reset(action.param.get("quarter"));
+        planningService.reset(action.param.get(PARAMS.QUARTER));
         return "Done";
-      case "modify_leave":
-        if (action.param.containsKey("date")) {
-          date = new LocalDate(action.param.get("date"));
-          planner.addLeave(TeamMember.valueOf(action.actor), date, date);
+      case MODIFY_LEAVE:
+        if (action.param.containsKey(PARAMS.DATE)) {
+          date = new LocalDate(action.param.get(PARAMS.DATE));
+          planningService.addLeave(action.actor, date, date);
         } else {
-          String[] dates = action.param.get("period").split("/");
-          planner.addLeave(TeamMember.valueOf(action.actor), new LocalDate(dates[0]),
-              new LocalDate(dates[1]));
+          String[] dates = action.param.get(PARAMS.PERIOD).split("/");
+         planningService.addLeave(action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
         }
         return "Added";
-      case "modify_oncall": break;
-      case "get_qtr_plan": return "http://172.20.160.123:8080/planner/plan";
-      case "fetch_oncall":
-        if (action.param.containsKey("date") && !action.param.get("date").isEmpty()) {
-          date = new LocalDate(action.param.get("date"));
-        } else if (action.param.containsKey("period") && !action.param.get("period").isEmpty()){
-          date = new LocalDate(action.param.get("period").split("/")[0]);
+      case GET_QTR_PLAN: return "http://localhost:8080/planningService/plan";
+      case FETCH_ONCALL:
+        if (action.param.containsKey(PARAMS.DATE) && !action.param.get(PARAMS.DATE).isEmpty()) {
+          date = new LocalDate(action.param.get(PARAMS.DATE));
+        } else if (action.param.containsKey(PARAMS.PERIOD) && !action.param.get(PARAMS.PERIOD).isEmpty()){
+          date = new LocalDate(action.param.get(PARAMS.PERIOD).split("/")[0]);
         } else {
           date = LocalDate.now();
         }
-        return planner.getOncall(date);
-      case "add_okr":
+        return planningService.getOncall(date);
+      case ADD_OKR:
         if (!action.actor.equals("ANKUR")) {
           return "Sorry! You are not the boss.";
         }
-        planner.updateOKR(action.param.get("okr"));
+        planningService.updateOKR(action.param.get(PARAMS.OKR));
         return "Done";
-      case "get_bandwidth":
-        return String.valueOf(planner.getBandwidth());
+      case GET_BANDWIDTH:
+        return String.valueOf(planningService.getBandwidth());
       default: return "Action Not Supported";
     }
-    return null;
   }
 
+  public enum PlanAction {
+    FETCH_TASKS, INIT_QTR_PLAN, MODIFY_LEAVE, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, GET_BANDWIDTH
+  }
+
+  public enum PARAMS {
+    DATE, PERIOD, PERSON, QUARTER, OKR
+  }
 
   public static class Action {
-    public String action;
+    public PlanAction action;
     public String actor;
-    public Map<String, String> param = Maps.newHashMap();
+    public Map<PARAMS, String> param = Maps.newHashMap();
 
-    public Action(String action, String actor, Map<String, String> param) {
+    public Action(PlanAction action, String actor, Map<PARAMS, String> param) {
       this.action = action;
       this.actor = actor;
       this.param = param;
@@ -122,11 +135,11 @@ public class PlannerResource {
     public Action() {
     }
 
-    public String getAction() {
+    public PlanAction getAction() {
       return action;
     }
 
-    public void setAction(String action) {
+    public void setAction(PlanAction action) {
       this.action = action;
     }
 
@@ -138,11 +151,11 @@ public class PlannerResource {
       this.actor = actor;
     }
 
-    public Map<String, String> getParam() {
+    public Map<PARAMS, String> getParam() {
       return param;
     }
 
-    public void setParam(Map<String, String> param) {
+    public void setParam(Map<PARAMS, String> param) {
       this.param = param;
     }
   }

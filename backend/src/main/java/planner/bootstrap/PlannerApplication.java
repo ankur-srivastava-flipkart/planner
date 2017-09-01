@@ -13,13 +13,16 @@ import io.swagger.jaxrs.config.DefaultJaxrsScanner;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import io.swagger.jersey.listing.ApiListingResourceJSON;
 import planner.core.model.Person;
-import planner.core.model.Planner;
 import planner.core.model.Team;
-import planner.core.resource.PlannerResource;
 
 public class PlannerApplication extends Application<PlannerConfiguration> {
     public static void main(String[] args) throws Exception {
-        new PlannerApplication().run(args);
+        try {
+            new PlannerApplication().run(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -54,14 +57,13 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
             }
         });
 
-        bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/planner", "index.html"));
+        bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/planner-ui", "index.html"));
 
         bootstrap.addBundle(hibernateBundle);
     }
 
     @Override
     public void run(PlannerConfiguration configuration, Environment environment) {
-        environment.jersey().register(new PlannerResource(new Planner("MJJA")));
         environment.jersey().register(ApiListingResourceJSON.class);
         environment.jersey().register(SwaggerSerializers.class);
         ScannerFactory.setScanner(new DefaultJaxrsScanner());

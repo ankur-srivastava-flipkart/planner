@@ -1,16 +1,21 @@
 package planner.core.model;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import javax.inject.Singleton;
-
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
+
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
 @Singleton
+@NoArgsConstructor
+@Data
 public class Planner {
 
     public static final String ONCALL = "Oncall";
@@ -19,12 +24,16 @@ public class Planner {
 
     int status = 0;
 
+    Team team;
 
-    public Planner(String quarter) {
+
+    public Planner(String quarter, Team team) {
+        this.team = team;
         populateWeeks(quarter);
         populatePlan();
         populateOncall();
         printPlan();
+
     }
 
     public void reset(String quarter){
@@ -65,24 +74,24 @@ public class Planner {
 
     public boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
 
-        List<List<TeamMember>> allCombinations = new ArrayList<>();
+        List<List<Person>> allCombinations = new ArrayList<>();
 
-        List<TeamMember> values = Arrays.stream(TeamMember.values()).filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
+        List<Person> values = team.getTeamMember().stream().filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
 
 
         for (int i = 1 ; i <= okr.parallelism ; i++) {
-            allCombinations.addAll( Permute.getAllCombinations(values.toArray(new TeamMember[values.size()]),values.size(), i));
+            allCombinations.addAll( Permute.getAllCombinations(values.toArray(new Person[values.size()]),values.size(), i));
         }
 
 
-        Map<List<TeamMember>, LocalDate> endDateMap = new HashMap<>();
-        for(List<TeamMember> eachCombination : allCombinations) {
+        Map<List<Person>, LocalDate> endDateMap = new HashMap<>();
+        for(List<Person> eachCombination : allCombinations) {
             int effortRemaining = okr.effortinPersonDays;
             Week lastWeek = null;
             for (Week week : weeks) {
                 double totalWeekEffort = 0;
 
-                for (TeamMember member : eachCombination) {
+                for (Person member : eachCombination) {
                     PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
                     totalWeekEffort += (5 - planForPersonWeek.occupied - planForPersonWeek.leaves)*member.productivity;
                 }
@@ -102,9 +111,9 @@ public class Planner {
 
         }
 
-        Map.Entry<List<TeamMember>, LocalDate> listLocalDateEntry = endDateMap.entrySet().stream().sorted(new Comparator<Map.Entry<List<TeamMember>, LocalDate>>() {
+        Map.Entry<List<Person>, LocalDate> listLocalDateEntry = endDateMap.entrySet().stream().sorted(new Comparator<Map.Entry<List<Person>, LocalDate>>() {
             @Override
-            public int compare(Map.Entry<List<TeamMember>, LocalDate> o1, Map.Entry<List<TeamMember>, LocalDate> o2) {
+            public int compare(Map.Entry<List<Person>, LocalDate> o1, Map.Entry<List<Person>, LocalDate> o2) {
 
                 return o1.getValue().compareTo(o2.getValue());
             }
@@ -115,7 +124,7 @@ public class Planner {
         double efforRemaining = okr.effortinPersonDays;
 
         for (Week week : weeks) {
-            for (TeamMember member :  listLocalDateEntry.getKey()) {
+            for (Person member :  listLocalDateEntry.getKey()) {
                 PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
                 if(planForPersonWeek.unoccupied() == 0 ) {
                     continue;
@@ -148,10 +157,10 @@ public class Planner {
         int i = 0;
         for (Week week : weeks) {
             final int tempV = i;
-            System.out.println(tempV % TeamMember.values().length + 1);
+            System.out.println(tempV % team.getTeamMember().size() + 1);
             List<PersonWeek> matchedWeeks = plan.stream().filter(pw ->
                     pw.week.weekNumber == week.weekNumber &&
-                            pw.person == TeamMember.values()[tempV % TeamMember.values().length]
+                            StringUtils.equals(pw.person.getName(),team.getTeamMember().get(tempV % team.getTeamMember().size()).getName())
             ).collect(Collectors.toList());
             if (matchedWeeks.size() > 1) {
                 System.out.println(matchedWeeks);
@@ -169,11 +178,11 @@ public class Planner {
             System.out.print("," + week.startDate  + " : " + week.endDate );
         }
         System.out.println();
-        for (TeamMember member : TeamMember.values()) {
+        for (Person member : team.getTeamMember()) {
             String row = plan.stream().filter(pw -> pw.person == member)
                     .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
                     .map(PersonWeek::getDescriptionWithLeaves)
-                    .reduce(member.name(), (a, b) -> a + "," + b);
+                    .reduce(member.getName(), (a, b) -> a + "," + b);
             System.out.print(row);
             System.out.println();
         }
@@ -190,11 +199,11 @@ public class Planner {
             html += "<th>" + week.startDate  + " : " + week.endDate + "</th>";
         }
         html += "</tr>";
-        for (TeamMember member : TeamMember.values()) {
+        for (Person member : team.getTeamMember()) {
             String row = plan.stream().filter(pw -> pw.person == member)
                 .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
                 .map(PersonWeek::getPrettyHtmlDescription)
-                .reduce("<td>" + member.name() + "</td>", (a, b) -> a + "<td>" + b + "</td>");
+                .reduce("<td>" + member.getName() + "</td>", (a, b) -> a + "<td>" + b + "</td>");
             html += "<tr>" + row + "</tr>";
         }
         html += "</table>";
@@ -204,7 +213,7 @@ public class Planner {
     }
 
     private void populatePlan() {
-        for(TeamMember member : TeamMember.values()) {
+        for(Person member : team.getTeamMember()) {
             for (Week week : weeks) {
                 PersonWeek personWeek = new PersonWeek();
                 personWeek.person = member;
@@ -246,9 +255,9 @@ public class Planner {
         return month;
     }
 
-    public void addLeave(TeamMember teamMember, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+    public void addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
         List<PersonWeek> weeksOfInterest = plan.stream()
-            .filter(personWeek -> personWeek.person == teamMember)
+            .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
             .filter(personWeek -> isOverlappingWithLeaves(personWeek.week, leaveStartDate, leaveEndDate))
             .collect(Collectors.toList());
         for (PersonWeek personWeek : weeksOfInterest) {
@@ -281,11 +290,11 @@ public class Planner {
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
                 .collect(Collectors.toList());
             for (PersonWeek requesteeCurrentWeek : requesteeCurrentWeeks) {
-                PersonWeek requesteeOncallWeek = getPlanForTeamMember(requesteeCurrentWeek.person)
+                PersonWeek requesteeOncallWeek = getPlanForPerson(requesteeCurrentWeek.person)
                     .stream()
                     .filter(pw -> pw.description.contains(ONCALL))
                     .findFirst().get();
-                PersonWeek requesterOncallWeek = getPlanForTeamMember(requesterCurrentWeek.person)
+                PersonWeek requesterOncallWeek = getPlanForPerson(requesterCurrentWeek.person)
                     .stream()
                     .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
                     .findAny()
@@ -315,9 +324,9 @@ public class Planner {
             .collect(Collectors.toList());
     }
 
-    public PersonWeek getPlanForPersonWeek(TeamMember teamMember, LocalDate date) {
+    public PersonWeek getPlanForPersonWeek(Person person, LocalDate date) {
         return plan.stream()
-                .filter(pw -> pw.person == teamMember)
+                .filter(pw -> StringUtils.equalsIgnoreCase(pw.person.getName(), person.getName()))
                 .filter(pw -> !pw.week.startDate.isAfter(date))
                 .filter(pw -> !pw.week.endDate.isBefore(date))
                 .findFirst()
@@ -330,9 +339,9 @@ public class Planner {
             .sum();
     }
 
-    public List<PersonWeek> getPlanForTeamMember(TeamMember teamMember) {
+    public List<PersonWeek> getPlanForPerson(Person person) {
         return plan.stream()
-            .filter(pw -> pw.person == teamMember)
+            .filter(pw -> StringUtils.equalsIgnoreCase(pw.person.getName(), person.getName()))
             .collect(Collectors.toList());
     }
 
@@ -343,6 +352,6 @@ public class Planner {
             .filter(pw -> pw.description.contains("Oncall"))
             .findAny()
             .get()
-            .person.name;
+            .person.getName();
     }
 }

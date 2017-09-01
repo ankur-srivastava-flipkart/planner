@@ -12,15 +12,15 @@ public class Permute {
     start & end ---> Staring and Ending indexes in arr[]
     index  ---> Current index in data[]
     r ---> Size of a combination to be printed */
-  private List<List<TeamMember>> combinations = new ArrayList<>();
+  private List<List<Person>> combinations = new ArrayList<>();
 
-  private void combinationUtil(TeamMember arr[], TeamMember data[], int start,
+  private void combinationUtil(Person arr[], Person data[], int start,
                                int end, int index, int r)
   {
     // Current combination is ready to be printed, print it
     if (index == r)
     {
-      List<TeamMember> people = new ArrayList<>();
+      List<Person> people = new ArrayList<>();
       for (int j=0; j<r; j++) {
       //  System.out.print(data[j] + " ");
         people.add(data[j]);
@@ -43,12 +43,12 @@ public class Permute {
 
   // The main function that prints all combinations of size r
   // in arr[] of size n. This function mainly uses combinationUtil()
-  private List<List<TeamMember>> getCombination(TeamMember arr[], int arrLength, int batchSize)
+  private List<List<Person>> getCombination(Person arr[], int arrLength, int batchSize)
   {
     combinations = new ArrayList<>();
 
     // A temporary array to store all combination one by one
-    TeamMember data[]=new TeamMember[batchSize];
+    Person data[]=new Person[batchSize];
 
     // return all combination using temprary array 'data[]'
     combinationUtil(arr, data, 0, arrLength-1, 0, batchSize);
@@ -56,7 +56,7 @@ public class Permute {
     return combinations;
   }
 
-  public static List<List<TeamMember>> getAllCombinations(TeamMember arr[], int arrLength, int batchSize) {
+  public static List<List<Person>> getAllCombinations(Person arr[], int arrLength, int batchSize) {
     Permute permute = new Permute();
     return permute.getCombination(arr, arrLength, batchSize);
   }
