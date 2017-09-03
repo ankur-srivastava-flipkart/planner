@@ -9,6 +9,7 @@ import org.junit.Test;
 import planner.core.dto.CreatePersonRequest;
 import planner.core.dto.CreateTeamRequest;
 import planner.core.model.Level;
+import planner.core.model.Okr;
 import planner.core.model.Person;
 import planner.core.model.Team;
 import planner.core.repository.PersonRepository;
@@ -20,7 +21,7 @@ import java.util.List;
 public class SetupServiceTest {
 
     @Rule
-    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).build();
+    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).addEntityClass(Okr.class).build();
 
     private SetupService service;
 

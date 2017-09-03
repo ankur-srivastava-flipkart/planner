@@ -20,5 +20,21 @@ create table team_person (
   teamMember_id varchar(255)
 );
 
+create table okr (
+  id int primary key AUTO_INCREMENT,
+  quarter varchar(255),
+  description TEXT,
+  jiraEpic varchar(255),
+  effortinPersonDays INT,
+  complexity varchar(255),
+  priority INT,
+  parallelism INT,
+  status INT,
+  willSpill BOOLEAN,
+  team_id INT
+);
+
 --rollback drop table team
 --rollback drop table person
+--rollback drop table team_person
+--rollback drop table okr

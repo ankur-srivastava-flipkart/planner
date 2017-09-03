@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -30,11 +31,36 @@ public class Team {
     private Person em;
 
     @OneToMany
-    List<Person> teamMember;
+    List<Person> teamMember = new ArrayList<>();
+
+    @OneToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    List<Okr> okr;
 
     public Team(String teamName, Person em, List<Person> teamMembers) {
         this.name=teamName;
         this.em = em;
         this.teamMember=teamMembers;
+    }
+
+    public void addOkr(Okr p) {
+        okr.add(p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+       // if (!super.equals(o)) return false;
+
+        Team team = (Team) o;
+
+        return name.equals(team.name);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + name.hashCode();
+        return result;
     }
 }

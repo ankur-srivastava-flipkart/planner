@@ -1,10 +1,31 @@
 package planner.core.model;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
+
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
+
+@Entity
+@Data
+@NoArgsConstructor
+@NamedQueries({
+        @NamedQuery(name = "planner.core.model.okr.findAllByTamQuarter",
+                query = "select p from Okr p where p.quarter like :quarter and p.team.name like :name"),
+        @NamedQuery(name = "planner.core.model.okr.findByName",
+                query = "select p from Okr p"
+                        + " where p.description LIKE :name")
+
+})
 public class Okr {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Integer id;
+    String quarter;
     String description;
     String jiraEpic;
     int effortinPersonDays;
@@ -13,6 +34,9 @@ public class Okr {
     int parallelism;
     int status = 0;
     boolean willSpill = false;
+
+    @ManyToOne
+    Team team;
 
     @Override
     public String toString() {
@@ -33,5 +57,24 @@ public class Okr {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        Okr okr = (Okr) o;
+
+        if (quarter != null ? !quarter.equals(okr.quarter) : okr.quarter != null) return false;
+        if (!jiraEpic.equals(okr.jiraEpic)) return false;
+        return team != null ? team.equals(okr.team) : okr.team == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + quarter.hashCode();
+        result = 31 * result + jiraEpic.hashCode();
+        result = 31 * result + (team != null ? team.hashCode() : 0);
+        return result;
+    }
 }

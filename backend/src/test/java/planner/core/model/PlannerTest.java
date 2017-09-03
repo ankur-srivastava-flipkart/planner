@@ -17,7 +17,7 @@ import java.util.List;
 public class PlannerTest {
 
     @Rule
-    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).build();
+    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).addEntityClass(Okr.class).build();
     private List<CreatePersonRequest> getDummyPeople() {
         return Lists.newArrayList(
                 new CreatePersonRequest("Ankur", "abc.def" , 0.3f, Level.SDE3),

@@ -1,28 +1,29 @@
 package planner.core.service;
 
 import org.joda.time.LocalDate;
-import planner.core.model.Person;
-import planner.core.model.PersonWeek;
-import planner.core.model.Planner;
-import planner.core.model.Team;
+import planner.core.model.*;
+import planner.core.repository.OkrRepository;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by ankur.srivastava on 01/09/17.
  */
-@Singleton
 public class PlanningService {
 
     private Planner planner;
     private SetupService setupService;
     private Team team;
+    private OkrRepository okrRepository;
 
     @Inject
-    public PlanningService(Planner planner, SetupService setupService) {
+    public PlanningService(Planner planner, SetupService setupService, OkrRepository okrRepository) {
         this.planner = planner;
         this.setupService = setupService;
+        this.okrRepository = okrRepository;
     }
 
     void checkAndSetTeam() {
@@ -43,9 +44,23 @@ public class PlanningService {
         planner.reset(quarter);
     }
 
-    public void updateOKR(String okr) {
+    public List<Okr> updateOKR(String okr) {
         checkAndSetTeam();
-        planner.updateOKR(okr);
+
+        List<Okr> okrList = Arrays.stream(okr.split("\\*"))
+                .map(Okr::new)
+               // .map(p-> {team.addOkr(p);  p.setTeam(team); return p;})
+                .collect(Collectors.toList());
+
+        okrList.stream().forEach(p-> {p.setTeam(team);});
+        List<Okr> alreadyPresentOks = okrList.stream().filter(team.getOkr()::contains).collect(Collectors.toList());
+        List<Okr> newOkr = okrList.stream().filter(p -> !alreadyPresentOks.contains(p)).collect(Collectors.toList());
+
+        planner.updateOKR(newOkr);
+        newOkr.stream().forEach(p-> {team.addOkr(p);});
+        okrRepository.persist(newOkr);
+        setupService.saveTeam(team);
+        return alreadyPresentOks;
     }
 
     public PersonWeek getPlanForPersonWeek(String member, LocalDate date) {

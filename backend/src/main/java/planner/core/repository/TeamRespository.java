@@ -34,4 +34,8 @@ public class TeamRespository extends AbstractDAO<Team> {
         return list(namedQuery("planner.core.model.team.findByName")
                 .setParameter("name","%" + name + "%"));
     }
+
+    public void saveTeam(Team team) {
+        persist(team);
+    }
 }

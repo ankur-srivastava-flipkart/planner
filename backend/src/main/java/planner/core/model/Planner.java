@@ -46,11 +46,7 @@ public class Planner {
         printPlan();
     }
 
-    public void updateOKR(String okrs) {
-        List<Okr> okrList = Arrays.stream(okrs.split("\\*"))
-                .map(Okr::new)
-                .sorted((o1, o2) -> o2.priority - o1.priority)
-                .collect(Collectors.toList());
+    public void updateOKR(List<Okr> okrList) {
 
         for (Okr eachOkr : okrList) {
             if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=3) {

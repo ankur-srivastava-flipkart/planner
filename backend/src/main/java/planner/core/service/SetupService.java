@@ -87,4 +87,8 @@ public class SetupService {
         if (personRequest.getProductivity() != null) { person.setProductivity(personRequest.getProductivity());}
         return person;
     }
+
+    public void saveTeam(Team team) {
+        teamRespository.saveTeam(team);
+    }
 }

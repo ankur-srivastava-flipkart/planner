@@ -5,13 +5,16 @@ import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.joda.time.LocalDate;
+import planner.core.model.Okr;
 import planner.core.service.PlanningService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by kumar.vivek on 23/06/17.
@@ -51,11 +54,12 @@ public class PlannerResource {
 
   @GET
   @Path("/addOkr/{okr}")
+  @UnitOfWork
   public String addOkr(@PathParam("okr") String okr){
 //    Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:5");
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
-    planningService.updateOKR(okr);
-    return "Added OKR";
+    List<Okr> unAddedOkrs = planningService.updateOKR(okr);
+    return "Added new OKRs. Already present OKRs : " + unAddedOkrs.stream().map(n -> n.toString()).collect(Collectors.joining(" * "));
   }
 
   @POST
