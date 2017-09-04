@@ -1,8 +1,11 @@
 package planner.core.service;
 
+import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 import planner.core.model.*;
 import planner.core.repository.OkrRepository;
+import planner.core.repository.PlanRepository;
+import planner.core.repository.WeekRepository;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -14,74 +17,163 @@ import java.util.stream.Collectors;
  */
 public class PlanningService {
 
-    private Planner planner;
     private SetupService setupService;
-    private Team team;
     private OkrRepository okrRepository;
+    private PlanRepository planRepository;
+    private WeekRepository weekRepository;
 
     @Inject
-    public PlanningService(Planner planner, SetupService setupService, OkrRepository okrRepository) {
-        this.planner = planner;
+    public PlanningService(SetupService setupService, OkrRepository okrRepository, PlanRepository planRepository, WeekRepository weekRepository) {
         this.setupService = setupService;
         this.okrRepository = okrRepository;
+        this.planRepository = planRepository;
+        this.weekRepository = weekRepository;
     }
 
-    void checkAndSetTeam() {
-        if (team == null) {
-            team = setupService.getTeamByName("OFF").get(0);
-            planner.setTeam(team);
+    public Team validateTeamAndQuarter(String team, String quarter) {
+        List<Team> team1 = setupService.getTeamByName(team);
+        if (team1.isEmpty()){
+            throw new RuntimeException("No Team with Given Name found.");
+        }
+        if (team1.size() > 1) {
+            throw new RuntimeException("Ambiguous Team name.");
         }
 
+        getStartingMonth(quarter);
+        return team1.get(0);
     }
 
-    public String getPlanAsHtml() {
-        checkAndSetTeam();
+    public String getPlanAsHtml(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
         return planner.getPlanAsHtml();
     }
 
-    public void reset(String quarter) {
-        checkAndSetTeam();
-        planner.reset(quarter);
+    private Plan fetchPlan(String quarter, Team team1) {
+        Plan plan = planRepository.loadPlan(quarter, team1);
+        if (plan == null) {
+            throw new RuntimeException("No current personWeeks exists for this team/quarter. Please use the reset API to create a personWeeks.");
+        }
+        return plan;
     }
 
-    public List<Okr> updateOKR(String okr) {
-        checkAndSetTeam();
+    private Planner fetchPlanner(String quarter, Team team1) {
+        Plan plan = planRepository.loadPlan(quarter, team1);
+        if (plan == null) {
+            throw new RuntimeException("No current personWeeks exists for this team/quarter. Please use the reset API to create a personWeeks.");
+        }
+        return new Planner().withPlan(plan);
+    }
+
+    public static int getStartingMonth(String quarter) {
+        if (quarter == null) {
+            throw new RuntimeException("Invalid quarter");
+        }
+
+        String year = "JFMAMJJASONDJ";
+        int month = year.indexOf(quarter);
+
+        if (month == -1) {
+            throw new RuntimeException("Invalid quarter");
+        }
+        return month;
+    }
+
+    public List<Week> fetchOrCreateWeeks(String quarter) {
+        List<Week> weeks = weekRepository.fetchWeeksByQuarter(quarter);
+        if (!weeks.isEmpty()) {
+            return weeks;
+        }
+
+        int startingMonth = getStartingMonth(quarter);
+        LocalDate startDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
+        LocalDate endDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
+
+        int weekNumber =1;
+        while (startDate.isBefore(endDate.plusDays(7))) {
+            Week e = new Week();
+            e.setWeekNumber(weekNumber);
+            e.setStartDate(startDate.withDayOfWeek(DateTimeConstants.MONDAY));
+            e.setEndDate(startDate.withDayOfWeek(DateTimeConstants.SUNDAY));
+            e.setQuarter(quarter);
+            weeks.add(e);
+            System.out.println(startDate.withDayOfWeek(DateTimeConstants.MONDAY) + " - " + startDate.withDayOfWeek(DateTimeConstants.SUNDAY));
+            startDate = startDate.plusDays(7);
+            weekNumber +=1;
+        }
+
+        weekRepository.persist(weeks);
+        return weeks;
+    }
+
+    public Plan createNewPlan(Team team, String quarter){
+        List<Week> weeks = fetchOrCreateWeeks(quarter);
+        Plan plan = new Plan();
+        Planner planner = new Planner();
+        plan.setTeam(team);
+        plan.setQuarter(quarter);
+        plan.setWeeks(weeks);
+        planner.withPlan(plan).populatePlan();
+        planner.withPlan(plan).populateOncall();
+        planner.withPlan(plan).printPlan();
+       return plan;
+    }
+
+    public Plan reset(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        try {
+            Plan plan = fetchPlan(quarter, team1);
+            planRepository.deletePlan(plan);
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+        }
+        Plan plan = createNewPlan(team1, quarter);
+        planRepository.savePlan(plan);
+        return plan;
+    }
+
+    public List<Okr> updateOKR(String team, String quarter, String okr) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
 
         List<Okr> okrList = Arrays.stream(okr.split("\\*"))
                 .map(Okr::new)
-               // .map(p-> {team.addOkr(p);  p.setTeam(team); return p;})
                 .collect(Collectors.toList());
 
-        okrList.stream().forEach(p-> {p.setTeam(team);});
-        List<Okr> alreadyPresentOks = okrList.stream().filter(team.getOkr()::contains).collect(Collectors.toList());
+        okrList.stream().forEach(p-> {p.setTeam(team1);});
+        List<Okr> alreadyPresentOks = okrList.stream().filter(team1.getOkr()::contains).collect(Collectors.toList());
         List<Okr> newOkr = okrList.stream().filter(p -> !alreadyPresentOks.contains(p)).collect(Collectors.toList());
 
         planner.updateOKR(newOkr);
-        newOkr.stream().forEach(p-> {team.addOkr(p);});
+        newOkr.stream().forEach(p-> {team1.addOkr(p);});
         okrRepository.persist(newOkr);
-        setupService.saveTeam(team);
+        setupService.saveTeam(team1);
         return alreadyPresentOks;
     }
 
-    public PersonWeek getPlanForPersonWeek(String member, LocalDate date) {
-        checkAndSetTeam();
+    public PersonWeek getPlanForPersonWeek(String team, String quarter,String member, LocalDate date) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(member);
         return planner.getPlanForPersonWeek(p, date);
     }
 
-    public void addLeave(String actor, LocalDate date, LocalDate date1) {
-        checkAndSetTeam();
+    public void addLeave(String team, String quarter, String actor, LocalDate date, LocalDate date1) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(actor);
         planner.addLeave(p, date, date1);
     }
 
-    public String getOncall(LocalDate date) {
-        checkAndSetTeam();
+    public String getOncall(String team, String quarter, LocalDate date) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
         return planner.getOncall(date);
     }
 
-    public int getBandwidth() {
-        checkAndSetTeam();
+    public int getBandwidth(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
         return  planner.getBandwidth();
     }
 }

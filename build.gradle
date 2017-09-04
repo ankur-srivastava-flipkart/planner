@@ -2,24 +2,20 @@ group 'planner'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'idea'
-apply plugin: 'shadow'
 
 buildscript {
     repositories {
         mavenCentral()
         jcenter()
-        maven {
-            name 'shadow'
-            url 'http://dl.bintray.com/content/johnrengelman/gradle-plugins'
-        }
     }
     dependencies {
-        classpath 'org.gradle.plugins:shadow:0.7.4'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
     }
 }
 
 
 subprojects {
+    apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'java'
 
     sourceCompatibility = 1.8
@@ -31,8 +27,18 @@ subprojects {
             url 'http://oss.sonatype.org/content/repositories/snapshots'
         }
 
-        ext.mainClassName = 'com.example.helloworld.HelloWorldApplication'
-        ext.configFile = 'src/main/resources/example.yml'
+        ext.mainClassName = 'planner.bootstrap.PlannerApplication'
+        ext.configFile = 'src/main/resources/planner.yml'
+
+    }
+
+    shadowJar {
+        mergeServiceFiles()
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+        manifest {
+            attributes 'Main-Class': 'planner.bootstrap.PlannerApplication'
+        }
 
     }
 

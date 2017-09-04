@@ -12,9 +12,7 @@ import io.swagger.config.ScannerFactory;
 import io.swagger.jaxrs.config.DefaultJaxrsScanner;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import io.swagger.jersey.listing.ApiListingResourceJSON;
-import planner.core.model.Okr;
-import planner.core.model.Person;
-import planner.core.model.Team;
+import planner.core.model.*;
 
 public class PlannerApplication extends Application<PlannerConfiguration> {
     public static void main(String[] args) throws Exception {
@@ -32,7 +30,7 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
     }
 
     private final HibernateBundle<PlannerConfiguration> hibernateBundle
-            = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class, Okr.class) {
+            = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class, Okr.class, Week.class, PersonWeek.class, Plan.class) {
         @Override
         public DataSourceFactory getDataSourceFactory(
                 PlannerConfiguration configuration

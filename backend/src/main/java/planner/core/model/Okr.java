@@ -1,5 +1,7 @@
 package planner.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -20,6 +22,7 @@ import javax.persistence.*;
                         + " where p.description LIKE :name")
 
 })
+@JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class, property="@id")
 public class Okr {
 
     @Id
@@ -66,7 +69,7 @@ public class Okr {
 
         if (quarter != null ? !quarter.equals(okr.quarter) : okr.quarter != null) return false;
         if (!jiraEpic.equals(okr.jiraEpic)) return false;
-        return team != null ? team.equals(okr.team) : okr.team == null;
+        return team != null ? team.getName().equals(okr.team.getName()) : okr.team == null;
     }
 
     @Override

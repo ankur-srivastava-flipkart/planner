@@ -1,49 +1,24 @@
 package planner.core.model;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 
-import javax.inject.Singleton;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Created by ankur.srivastava on 23/06/17.
  */
-@Singleton
-@NoArgsConstructor
 @Data
 public class Planner {
 
     public static final String ONCALL = "Oncall";
-    ArrayList<PersonWeek> plan= new ArrayList<>();
-    List<Week> weeks = new ArrayList<>();
+    private Plan plan;
 
-    int status = 0;
-
-    Team team;
-
-
-    public Planner(String quarter, Team team) {
-        this.team = team;
-        populateWeeks(quarter);
-        populatePlan();
-        populateOncall();
-        printPlan();
-
-    }
-
-    public void reset(String quarter){
-        plan = new ArrayList<>();
-        weeks = new ArrayList<>();
-        status = 0;
-        populateWeeks(quarter);
-        populatePlan();
-        populateOncall();
-        printPlan();
+    public Planner withPlan(Plan plan) {
+        this.plan = plan;
+        return this;
     }
 
     public void updateOKR(List<Okr> okrList) {
@@ -64,7 +39,6 @@ public class Planner {
             }  else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays > 10) {
                 eachOkr.willSpill = blockPeople(Level.SDE2, eachOkr, false);
             }
-
         }
     }
 
@@ -72,7 +46,7 @@ public class Planner {
 
         List<List<Person>> allCombinations = new ArrayList<>();
 
-        List<Person> values = team.getTeamMember().stream().filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
+        List<Person> values = plan.getTeam().getTeamMember().stream().filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
 
 
         for (int i = 1 ; i <= okr.parallelism ; i++) {
@@ -84,25 +58,25 @@ public class Planner {
         for(List<Person> eachCombination : allCombinations) {
             int effortRemaining = okr.effortinPersonDays;
             Week lastWeek = null;
-            for (Week week : weeks) {
+            for (Week week : plan.getWeeks()) {
                 double totalWeekEffort = 0;
 
                 for (Person member : eachCombination) {
-                    PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
+                    PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.getStartDate());
                     totalWeekEffort += (5 - planForPersonWeek.occupied - planForPersonWeek.leaves)*member.productivity;
                 }
                 effortRemaining -= Math.round(totalWeekEffort);
-                System.out.println(week.weekNumber + " , " + effortRemaining + " - " + totalWeekEffort);
+                System.out.println(week.getWeekNumber() + " , " + effortRemaining + " - " + totalWeekEffort);
 
                 if (effortRemaining <= 0) {
-                    endDateMap.put(eachCombination,week.endDate);
+                    endDateMap.put(eachCombination,week.getEndDate());
                     break;
                 }
                 lastWeek = week;
             }
 
             if (effortRemaining > 0) {
-                endDateMap.put(eachCombination,lastWeek.endDate.plusDays(effortRemaining/eachCombination.size()));
+                endDateMap.put(eachCombination,lastWeek.getEndDate().plusDays(effortRemaining/eachCombination.size()));
             }
 
         }
@@ -119,9 +93,9 @@ public class Planner {
 
         double efforRemaining = okr.effortinPersonDays;
 
-        for (Week week : weeks) {
+        for (Week week : plan.getWeeks()) {
             for (Person member :  listLocalDateEntry.getKey()) {
-                PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.startDate);
+                PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.getStartDate());
                 if(planForPersonWeek.unoccupied() == 0 ) {
                     continue;
                 }
@@ -149,14 +123,14 @@ public class Planner {
         return false;
     }
 
-    private void populateOncall() {
+    public void populateOncall() {
         int i = 0;
-        for (Week week : weeks) {
+        for (Week week : plan.getWeeks()) {
             final int tempV = i;
-            System.out.println(tempV % team.getTeamMember().size() + 1);
-            List<PersonWeek> matchedWeeks = plan.stream().filter(pw ->
-                    pw.week.weekNumber == week.weekNumber &&
-                            StringUtils.equals(pw.person.getName(),team.getTeamMember().get(tempV % team.getTeamMember().size()).getName())
+            System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
+            List<PersonWeek> matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
+                    pw.week.getWeekNumber() == week.getWeekNumber() &&
+                            StringUtils.equals(pw.person.getName(), plan.getTeam().getTeamMember().get(tempV % plan.getTeam().getTeamMember().size()).getName())
             ).collect(Collectors.toList());
             if (matchedWeeks.size() > 1) {
                 System.out.println(matchedWeeks);
@@ -170,13 +144,13 @@ public class Planner {
 
     public void printPlan() {
         System.out.print("Employee/Week");
-        for (Week week : weeks) {
-            System.out.print("," + week.startDate  + " : " + week.endDate );
+        for (Week week : plan.getWeeks()) {
+            System.out.print("," + week.getStartDate()  + " : " + week.getEndDate() );
         }
         System.out.println();
-        for (Person member : team.getTeamMember()) {
-            String row = plan.stream().filter(pw -> pw.person == member)
-                    .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
+        for (Person member : plan.getTeam().getTeamMember()) {
+            String row = plan.getPersonWeeks().stream().filter(pw -> pw.person == member)
+                    .sorted((o1, o2) -> (o1.week.getWeekNumber() - o2.week.getWeekNumber()))
                     .map(PersonWeek::getDescriptionWithLeaves)
                     .reduce(member.getName(), (a, b) -> a + "," + b);
             System.out.print(row);
@@ -191,13 +165,13 @@ public class Planner {
         html += "<table>";
         html += "<tr>";
         html += "<th>Employee/Week</th>";
-        for (Week week : weeks) {
-            html += "<th>" + week.startDate  + " : " + week.endDate + "</th>";
+        for (Week week : plan.getWeeks()) {
+            html += "<th>" + week.getStartDate()  + " : " + week.getEndDate() + "</th>";
         }
         html += "</tr>";
-        for (Person member : team.getTeamMember()) {
-            String row = plan.stream().filter(pw -> pw.person == member)
-                .sorted((o1, o2) -> (o1.week.weekNumber - o2.week.weekNumber))
+        for (Person member : plan.getTeam().getTeamMember()) {
+            String row = plan.getPersonWeeks().stream().filter(pw -> pw.person == member)
+                .sorted((o1, o2) -> (o1.week.getWeekNumber() - o2.week.getWeekNumber()))
                 .map(PersonWeek::getPrettyHtmlDescription)
                 .reduce("<td>" + member.getName() + "</td>", (a, b) -> a + "<td>" + b + "</td>");
             html += "<tr>" + row + "</tr>";
@@ -208,51 +182,19 @@ public class Planner {
         return html;
     }
 
-    private void populatePlan() {
-        for(Person member : team.getTeamMember()) {
-            for (Week week : weeks) {
+    public void populatePlan() {
+        for(Person member : plan.getTeam().getTeamMember()) {
+            for (Week week : plan.getWeeks()) {
                 PersonWeek personWeek = new PersonWeek();
                 personWeek.person = member;
                 personWeek.week = week;
-                plan.add(personWeek);
+                plan.getPersonWeeks().add(personWeek);
             }
         }
     }
 
-    private void populateWeeks(String quarter) {
-        int startingMonth = getStartingMonth(quarter);
-        LocalDate startDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
-        LocalDate endDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
-
-        int weekNumber =1;
-        while (startDate.isBefore(endDate.plusDays(7))) {
-            Week e = new Week();
-            e.weekNumber = weekNumber;
-            e.startDate = startDate.withDayOfWeek(DateTimeConstants.MONDAY);
-            e.endDate = startDate.withDayOfWeek(DateTimeConstants.SUNDAY);
-            weeks.add(e);
-            System.out.println(startDate.withDayOfWeek(DateTimeConstants.MONDAY) + " - " + startDate.withDayOfWeek(DateTimeConstants.SUNDAY));
-            startDate = startDate.plusDays(7);
-            weekNumber +=1;
-        }
-    }
-
-    private int getStartingMonth(String quarter) {
-        if (quarter == null) {
-            throw new RuntimeException("Invalid quarter");
-        }
-
-        String year = "JFMAMJJASONDJ";
-        int month = year.indexOf(quarter);
-
-        if (month == -1) {
-            throw new RuntimeException("Invalid quarter");
-        }
-        return month;
-    }
-
     public void addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
-        List<PersonWeek> weeksOfInterest = plan.stream()
+        List<PersonWeek> weeksOfInterest = plan.getPersonWeeks().stream()
             .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
             .filter(personWeek -> isOverlappingWithLeaves(personWeek.week, leaveStartDate, leaveEndDate))
             .collect(Collectors.toList());
@@ -261,8 +203,8 @@ public class Planner {
                 swapOncall(personWeek);
             }
             long noOfLeaveDays = 0;
-            LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.startDate) ? leaveStartDate : personWeek.week.startDate;
-            LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.endDate) ? leaveEndDate : personWeek.week.endDate;
+            LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.getStartDate()) ? leaveStartDate : personWeek.week.getStartDate();
+            LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.getEndDate()) ? leaveEndDate : personWeek.week.getEndDate();
             for (LocalDate date = leaveStartInWeek; !date.isAfter(leaveEndInWeek); date = date.plusDays(1)) {
                 if (date.toDateTimeAtCurrentTime().getDayOfWeek() <= 5) {
                     noOfLeaveDays++;
@@ -273,14 +215,14 @@ public class Planner {
     }
 
     private boolean isOverlappingWithLeaves(Week week, LocalDate leaveStartDate, LocalDate leaveEndDate) {
-        return (!week.startDate.isAfter(leaveStartDate) && !week.endDate.isBefore(leaveEndDate))
-            || (!week.startDate.isBefore(leaveStartDate) && !week.startDate.isAfter(leaveEndDate))
-            || (!week.endDate.isBefore(leaveStartDate) && !week.endDate.isAfter(leaveEndDate));
+        return (!week.getStartDate().isAfter(leaveStartDate) && !week.getEndDate().isBefore(leaveEndDate))
+            || (!week.getStartDate().isBefore(leaveStartDate) && !week.getStartDate().isAfter(leaveEndDate))
+            || (!week.getEndDate().isBefore(leaveStartDate) && !week.getEndDate().isAfter(leaveEndDate));
     }
 
     public void swapOncall(PersonWeek requesterCurrentWeek) {
         try {
-            List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.startDate)
+            List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.getStartDate())
                 .stream()
                 .filter(pw -> pw.leaves == 0)
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
@@ -292,7 +234,7 @@ public class Planner {
                     .findFirst().get();
                 PersonWeek requesterOncallWeek = getPlanForPerson(requesterCurrentWeek.person)
                     .stream()
-                    .filter(pw -> pw.week.weekNumber == requesteeOncallWeek.week.weekNumber)
+                    .filter(pw -> pw.week.getWeekNumber() == requesteeOncallWeek.week.getWeekNumber())
                     .findAny()
                     .get();
                 if (requesterOncallWeek.leaves == 0) {
@@ -314,37 +256,37 @@ public class Planner {
     }
 
     public List<PersonWeek> getPlanForWeek(LocalDate date) {
-        return plan.stream()
-            .filter(pw -> !pw.week.startDate.isAfter(date))
-            .filter(pw -> !pw.week.endDate.isBefore(date))
+        return plan.getPersonWeeks().stream()
+            .filter(pw -> !pw.week.getStartDate().isAfter(date))
+            .filter(pw -> !pw.week.getEndDate().isBefore(date))
             .collect(Collectors.toList());
     }
 
     public PersonWeek getPlanForPersonWeek(Person person, LocalDate date) {
-        return plan.stream()
+        return plan.getPersonWeeks().stream()
                 .filter(pw -> StringUtils.equalsIgnoreCase(pw.person.getName(), person.getName()))
-                .filter(pw -> !pw.week.startDate.isAfter(date))
-                .filter(pw -> !pw.week.endDate.isBefore(date))
+                .filter(pw -> !pw.week.getStartDate().isAfter(date))
+                .filter(pw -> !pw.week.getEndDate().isBefore(date))
                 .findFirst()
                 .get();
     }
 
     public int getBandwidth() {
-        return plan.stream()
+        return plan.getPersonWeeks().stream()
             .mapToInt(PersonWeek::unoccupied)
             .sum();
     }
 
     public List<PersonWeek> getPlanForPerson(Person person) {
-        return plan.stream()
+        return plan.getPersonWeeks().stream()
             .filter(pw -> StringUtils.equalsIgnoreCase(pw.person.getName(), person.getName()))
             .collect(Collectors.toList());
     }
 
     public String getOncall(LocalDate date) {
-        return plan.stream()
-            .filter(pw -> !pw.week.startDate.isAfter(date))
-            .filter(pw -> !pw.week.endDate.isBefore(date))
+        return plan.getPersonWeeks().stream()
+            .filter(pw -> !pw.week.getStartDate().isAfter(date))
+            .filter(pw -> !pw.week.getEndDate().isBefore(date))
             .filter(pw -> pw.description.contains("Oncall"))
             .findAny()
             .get()

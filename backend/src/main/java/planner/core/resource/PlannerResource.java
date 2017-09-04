@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Created by kumar.vivek on 23/06/17.
  */
-@Path("/planner/")
+@Path("/planner/{team}/{quarter}")
 @Singleton
 @Api(value = "Planner for a team")
 public class PlannerResource {
@@ -34,42 +34,43 @@ public class PlannerResource {
   @GET
   @Path("/plan")
   @Produces("text/html")
-  @ApiOperation(value = "Get the current quarter plan",
-          notes = "Get the current quarter plan",
+  @ApiOperation(value = "Get the current quarter personWeeks",
+          notes = "Get the current quarter personWeeks",
           response = String.class
   )
-  public String getQuarterPlan(){
-    return planningService.getPlanAsHtml();
+  @UnitOfWork
+  public String getQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter){
+    return planningService.getPlanAsHtml(team, quarter);
   }
 
   @POST
-  @Path("/{quarter}/plan/reset")
+  @Path("/plan/reset")
   @ApiOperation(value = "Reset Quarter",
           notes = "Reset Quarter"
   )
   @UnitOfWork
-  public void resetQuarterPlan(@PathParam("quarter") String quarter){
-    planningService.reset(quarter);
+  public void resetQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter){
+    planningService.reset(team, quarter);
   }
 
   @GET
   @Path("/addOkr/{okr}")
   @UnitOfWork
-  public String addOkr(@PathParam("okr") String okr){
+  public String addOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, @PathParam("okr") String okr){
 //    Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:5");
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
-    List<Okr> unAddedOkrs = planningService.updateOKR(okr);
+    List<Okr> unAddedOkrs = planningService.updateOKR(team, quarter, okr);
     return "Added new OKRs. Already present OKRs : " + unAddedOkrs.stream().map(n -> n.toString()).collect(Collectors.joining(" * "));
   }
 
   @POST
   @Path("/action")
   @Consumes(MediaType.APPLICATION_JSON)
-  @ApiOperation(value = "Various actions on the plan. ",
+  @ApiOperation(value = "Various actions on the personWeeks. ",
           notes = "Reset Quarter"
   )
   @UnitOfWork
-  public String takeAction(Action action){
+  public String takeAction(@PathParam("team") String team, @PathParam("quarter") String quarter, Action action){
     LocalDate date;
     switch (action.action) {
       case FETCH_TASKS:
@@ -79,23 +80,23 @@ public class PlannerResource {
           date = new LocalDate(action.param.get(PARAMS.PERIOD).split("/")[0]);
         }
         String member = action.param.containsKey(PARAMS.PERSON) && !action.param.get(PARAMS.PERSON).isEmpty() ? action.param.get(PARAMS.PERSON) : action.actor ;
-       return planningService.getPlanForPersonWeek(member, date).toString();
+       return planningService.getPlanForPersonWeek(team, quarter, member, date).toString();
       case INIT_QTR_PLAN:
         if (!action.actor.equals("ANKUR")) {
           return "Sorry! You are not the boss.";
         }
-        planningService.reset(action.param.get(PARAMS.QUARTER));
+        planningService.reset(team, quarter);
         return "Done";
       case MODIFY_LEAVE:
         if (action.param.containsKey(PARAMS.DATE)) {
           date = new LocalDate(action.param.get(PARAMS.DATE));
-          planningService.addLeave(action.actor, date, date);
+          planningService.addLeave(team, quarter, action.actor, date, date);
         } else {
           String[] dates = action.param.get(PARAMS.PERIOD).split("/");
-         planningService.addLeave(action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
+         planningService.addLeave(team, quarter, action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
         }
         return "Added";
-      case GET_QTR_PLAN: return "http://localhost:8080/planningService/plan";
+      case GET_QTR_PLAN: return "http://10.85.250.122:35432/planner/" + team + "/" + quarter + "/plan";
       case FETCH_ONCALL:
         if (action.param.containsKey(PARAMS.DATE) && !action.param.get(PARAMS.DATE).isEmpty()) {
           date = new LocalDate(action.param.get(PARAMS.DATE));
@@ -104,15 +105,15 @@ public class PlannerResource {
         } else {
           date = LocalDate.now();
         }
-        return planningService.getOncall(date);
+        return planningService.getOncall(team, quarter, date);
       case ADD_OKR:
         if (!action.actor.equals("ANKUR")) {
           return "Sorry! You are not the boss.";
         }
-        planningService.updateOKR(action.param.get(PARAMS.OKR));
+        planningService.updateOKR(team, quarter, action.param.get(PARAMS.OKR));
         return "Done";
       case GET_BANDWIDTH:
-        return String.valueOf(planningService.getBandwidth());
+        return String.valueOf(planningService.getBandwidth(team, quarter));
       default: return "Action Not Supported";
     }
   }

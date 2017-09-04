@@ -1,5 +1,8 @@
 package planner.core.model;
 
+import lombok.Data;
+
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,12 +10,24 @@ import java.util.List;
  * Created by ankur.srivastava on 23/06/17.
  */
 
+@Entity
+@Data
 public class PersonWeek {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    int id;
+
+    @OneToOne(fetch = FetchType.EAGER)
     Person person;
+
+    @OneToOne(fetch = FetchType.EAGER)
     Week week;
+
     String description = "";
     int leaves = 0;
     int occupied = 0;
+
+    @OneToMany(fetch = FetchType.EAGER)
     List<Okr> okrList = new ArrayList<>();
 
     @Override

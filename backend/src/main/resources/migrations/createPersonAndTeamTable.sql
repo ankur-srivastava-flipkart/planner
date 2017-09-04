@@ -34,6 +34,13 @@ create table okr (
   team_id INT
 );
 
+create table week (
+  id int primary key AUTO_INCREMENT,
+  weekNumber INT,
+  startDate DATE,
+  endDate date
+);
+
 --rollback drop table team
 --rollback drop table person
 --rollback drop table team_person

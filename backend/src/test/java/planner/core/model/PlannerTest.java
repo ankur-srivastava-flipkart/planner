@@ -5,8 +5,8 @@ import io.dropwizard.testing.junit.DAOTestRule;
 import org.junit.*;
 import planner.core.dto.CreatePersonRequest;
 import planner.core.dto.CreateTeamRequest;
-import planner.core.repository.PersonRepository;
-import planner.core.repository.TeamRespository;
+import planner.core.repository.*;
+import planner.core.service.PlanningService;
 import planner.core.service.SetupService;
 
 import java.util.List;
@@ -17,7 +17,14 @@ import java.util.List;
 public class PlannerTest {
 
     @Rule
-    public DAOTestRule database = DAOTestRule.newBuilder().addEntityClass(Person.class).addEntityClass(Team.class).addEntityClass(Okr.class).build();
+    public DAOTestRule database = DAOTestRule.newBuilder().setShowSql(true).addEntityClass(Person.class)
+            .addEntityClass(Team.class)
+            .addEntityClass(Okr.class)
+            .addEntityClass(Plan.class)
+            .addEntityClass(PersonWeek.class)
+            .addEntityClass(Week.class)
+
+            .build();
     private List<CreatePersonRequest> getDummyPeople() {
         return Lists.newArrayList(
                 new CreatePersonRequest("Ankur", "abc.def" , 0.3f, Level.SDE3),
@@ -34,21 +41,25 @@ public class PlannerTest {
     }
 
     Team team;
+    Plan plan;
 
     @Before
     public void setUp() throws Exception {
 
-        SetupService service = new SetupService(new PersonRepository(database.getSessionFactory()), new TeamRespository(database.getSessionFactory()));
-
+        SetupService setupService = new SetupService(new PersonRepository(database.getSessionFactory()), new TeamRespository(database.getSessionFactory()));
+        PlanningService planningService = new PlanningService(setupService, new OkrRepository(database.getSessionFactory()),new PlanRepository(database.getSessionFactory()),
+                new WeekRepository(database.getSessionFactory()));
         CreateTeamRequest createTeamRequest = new CreateTeamRequest();
         createTeamRequest.setTeamName("OFF");
         createTeamRequest.setEm("ankur");
         createTeamRequest.setTeamMembers(Lists.newArrayList("Ankur","megha","kiran","shikhar", "nandha", "vivek", "tejeswar", "shridhar", "amit", "deepak"));
         team = database.inTransaction(() -> {
-            service.createPeople(getDummyPeople());
-            return service.createTeam(createTeamRequest);
-
+            setupService.createPeople(getDummyPeople());
+            return setupService.createTeam(createTeamRequest);
         });
+
+        plan = planningService.reset("OFF", "AMJ");
+
     }
 
     @After
@@ -56,18 +67,11 @@ public class PlannerTest {
     }
 
     @Test
-    public void testWeeks() {
-        new Planner("AMJ", team);
-    }
-
-    @Test
     public void testBlockPeople() {
 
-        Planner amj = new Planner("AMJ", team);
+        Planner amj = new Planner().withPlan(plan);
 
         Okr okr = new Okr("okr1:jir1:20:COMPLEX:1:3");
-
-
         amj.blockPeople(Level.SDE2, okr, false);
         amj.printPlan();
 
@@ -77,7 +81,7 @@ public class PlannerTest {
     @Test
     public void testBlockPeople1() {
 
-        Planner amj = new Planner("AMJ", team);
+        Planner amj = new Planner().withPlan(plan);
 
         Okr okr = new Okr("okr1:jir1:400:COMPLEX:1:3");
 
@@ -90,7 +94,7 @@ public class PlannerTest {
     @Test
     public void testBlockPeople2() {
 
-        Planner amj = new Planner("AMJ", team);
+        Planner amj = new Planner().withPlan(plan);
 
         Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:10");
         Okr okr1 = new Okr("GST:jir1:60:COMPLEX:1:10");
@@ -110,7 +114,7 @@ public class PlannerTest {
     @Test
     public void testBlockPeople3() {
 
-        Planner amj = new Planner("AMJ", team);
+        Planner amj = new Planner().withPlan(plan);
 
         Okr okr = new Okr("okr:jir1:10:COMPLEX:1:1");
 

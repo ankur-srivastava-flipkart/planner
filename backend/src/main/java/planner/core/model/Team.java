@@ -1,5 +1,7 @@
 package planner.core.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +23,7 @@ import java.util.List;
                 query = "select p from Team p"
                         + " where p.name LIKE :name")
 })
+@JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class, property="@id")
 public class Team {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
@@ -33,7 +36,7 @@ public class Team {
     @OneToMany
     List<Person> teamMember = new ArrayList<>();
 
-    @OneToMany(mappedBy = "team", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "team")
     List<Okr> okr;
 
     public Team(String teamName, Person em, List<Person> teamMembers) {

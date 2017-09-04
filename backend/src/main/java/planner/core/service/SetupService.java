@@ -69,7 +69,7 @@ public class SetupService {
     public Team removeTeamMember(String teamName, String personName) {
         Team team = teamRespository.getTeamByName(teamName);
         team.getTeamMember().removeIf(member -> StringUtils.equalsIgnoreCase(member.getName(), personName));
-
+        teamRespository.saveTeam(team);
         return team;
     }
 
