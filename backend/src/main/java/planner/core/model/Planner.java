@@ -128,9 +128,13 @@ public class Planner {
         for (Week week : plan.getWeeks()) {
             final int tempV = i;
             System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
+
+            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal()).collect(Collectors.toList());
+
             List<PersonWeek> matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
                     pw.week.getWeekNumber() == week.getWeekNumber() &&
-                            StringUtils.equals(pw.person.getName(), plan.getTeam().getTeamMember().get(tempV % plan.getTeam().getTeamMember().size()).getName())
+                            StringUtils.equals(pw.person.getName(), eligibleMembers.get(tempV % eligibleMembers.size()).getName())
+
             ).collect(Collectors.toList());
             if (matchedWeeks.size() > 1) {
                 System.out.println(matchedWeeks);
@@ -226,6 +230,7 @@ public class Planner {
                 .stream()
                 .filter(pw -> pw.leaves == 0)
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
+                .filter(pw-> pw.person.getLevel().ordinal() > Level.PSE3.ordinal())
                 .collect(Collectors.toList());
             for (PersonWeek requesteeCurrentWeek : requesteeCurrentWeeks) {
                 PersonWeek requesteeOncallWeek = getPlanForPerson(requesteeCurrentWeek.person)
