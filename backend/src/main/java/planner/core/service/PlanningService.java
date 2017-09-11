@@ -182,4 +182,13 @@ public class PlanningService {
         Planner planner = fetchPlanner(quarter, team1);
         return  planner.getBandwidth();
     }
+
+    public void resetPlanForMember(String team, String quarter, String actor) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        Person p = setupService.getPersonByName(actor);
+        planner.getPlan().getPersonWeeks().removeIf(pw -> pw.getPerson().getId() == p.getId());
+        planRepository.savePlan(planner.getPlan());
+        planner.addPlanForPerson(p);
+    }
 }

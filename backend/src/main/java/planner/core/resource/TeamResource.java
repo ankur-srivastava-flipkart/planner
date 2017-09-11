@@ -66,7 +66,8 @@ public class TeamResource {
     @UnitOfWork
     @Path("/{teamName}/members/{personName}")
     public Team addTeamMember(@PathParam("teamName") String teamName, @PathParam("personName") String personName) {
-        return setupService.addTeamMember(teamName, personName);
+        Team team = setupService.addTeamMember(teamName, personName);
+        return team;
     }
 
     @DELETE

@@ -214,6 +214,15 @@ public class Planner {
         }
     }
 
+    public void addPlanForPerson(Person member) {
+            for (Week week : plan.getWeeks()) {
+                PersonWeek personWeek = new PersonWeek();
+                personWeek.person = member;
+                personWeek.week = week;
+                plan.getPersonWeeks().add(personWeek);
+            }
+    }
+
     public String addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
         List<PersonWeek> weeksOfInterest = plan.getPersonWeeks().stream()
             .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
