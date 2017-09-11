@@ -8,6 +8,7 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.dropwizard.views.ViewBundle;
 import io.swagger.config.ScannerFactory;
 import io.swagger.jaxrs.config.DefaultJaxrsScanner;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
@@ -59,6 +60,8 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
         bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/planner-ui", "index.html"));
 
         bootstrap.addBundle(hibernateBundle);
+
+        bootstrap.addBundle(new ViewBundle());
     }
 
     @Override

@@ -49,6 +49,12 @@ public class PlanningService {
         return planner.getPlanAsHtml();
     }
 
+    public Planner getPlan(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        return planner;
+    }
+
     private Plan fetchPlan(String quarter, Team team1) {
         Plan plan = planRepository.loadPlan(quarter, team1);
         if (plan == null) {
@@ -158,11 +164,11 @@ public class PlanningService {
         return planner.getPlanForPersonWeek(p, date);
     }
 
-    public void addLeave(String team, String quarter, String actor, LocalDate date, LocalDate date1) {
+    public String addLeave(String team, String quarter, String actor, LocalDate date, LocalDate date1) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(actor);
-        planner.addLeave(p, date, date1);
+        return planner.addLeave(p, date, date1);
     }
 
     public String getOncall(String team, String quarter, LocalDate date) {

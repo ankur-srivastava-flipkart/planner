@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import org.joda.time.LocalDate;
 import planner.core.model.Okr;
 import planner.core.service.PlanningService;
+import planner.core.view.PlannerView;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,8 +40,8 @@ public class PlannerResource {
           response = String.class
   )
   @UnitOfWork
-  public String getQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter){
-    return planningService.getPlanAsHtml(team, quarter);
+  public PlannerView getQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter){
+    return new PlannerView(planningService.getPlan(team, quarter));
   }
 
   @POST
@@ -90,12 +91,11 @@ public class PlannerResource {
       case MODIFY_LEAVE:
         if (action.param.containsKey(PARAMS.DATE)) {
           date = new LocalDate(action.param.get(PARAMS.DATE));
-          planningService.addLeave(team, quarter, action.actor, date, date);
+          return planningService.addLeave(team, quarter, action.actor, date, date);
         } else {
           String[] dates = action.param.get(PARAMS.PERIOD).split("/");
-         planningService.addLeave(team, quarter, action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
+         return planningService.addLeave(team, quarter, action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
         }
-        return "Added";
       case GET_QTR_PLAN: return "http://10.85.250.122:35432/planner/" + team + "/" + quarter + "/plan";
       case FETCH_ONCALL:
         if (action.param.containsKey(PARAMS.DATE) && !action.param.get(PARAMS.DATE).isEmpty()) {

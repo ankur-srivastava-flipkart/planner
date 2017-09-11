@@ -3,6 +3,8 @@ package planner.core.model;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -129,7 +131,14 @@ public class Planner {
             final int tempV = i;
             System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
 
-            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal()).collect(Collectors.toList());
+            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal())
+                    .sorted(new Comparator<Person>() {
+                        @Override
+                        public int compare(Person o1, Person o2) {
+                            return o1.getId().compareTo(o2.getId());
+                        }
+                    })
+                    .collect(Collectors.toList());
 
             List<PersonWeek> matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
                     pw.week.getWeekNumber() == week.getWeekNumber() &&
@@ -163,6 +172,14 @@ public class Planner {
     }
 
     public String getPlanAsHtml() {
+
+         DateTimeFormatter monthAndYear = new DateTimeFormatterBuilder()
+                 .appendDayOfMonth(1)
+                 .appendLiteral(' ')
+                 .appendMonthOfYearShortText()
+                   .toFormatter();
+
+
         String html = "<html>";
         html += "<style type=\"text/css\">td {border:1px solid grey;} th {border:1px solid grey;} table {border:1px solid grey;}</style>";
         html += "<body>";
@@ -170,7 +187,7 @@ public class Planner {
         html += "<tr>";
         html += "<th>Employee/Week</th>";
         for (Week week : plan.getWeeks()) {
-            html += "<th>" + week.getStartDate()  + " : " + week.getEndDate() + "</th>";
+            html += "<th>" + monthAndYear.print(  week.getStartDate())  + " : " + monthAndYear.print(week.getEndDate()) + "</th>";
         }
         html += "</tr>";
         for (Person member : plan.getTeam().getTeamMember()) {
@@ -197,15 +214,12 @@ public class Planner {
         }
     }
 
-    public void addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+    public String addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
         List<PersonWeek> weeksOfInterest = plan.getPersonWeeks().stream()
             .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
             .filter(personWeek -> isOverlappingWithLeaves(personWeek.week, leaveStartDate, leaveEndDate))
             .collect(Collectors.toList());
         for (PersonWeek personWeek : weeksOfInterest) {
-            if (personWeek.description.contains(ONCALL)) {
-                swapOncall(personWeek);
-            }
             long noOfLeaveDays = 0;
             LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.getStartDate()) ? leaveStartDate : personWeek.week.getStartDate();
             LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.getEndDate()) ? leaveEndDate : personWeek.week.getEndDate();
@@ -216,6 +230,17 @@ public class Planner {
             }
             personWeek.leaves += noOfLeaveDays;
         }
+        try {
+            for (PersonWeek personWeek : weeksOfInterest) {
+                if (personWeek.description.contains(ONCALL)) {
+
+                    swapOncall(personWeek);
+                }
+            }
+        } catch (Exception e) {
+            return "Leaves Added. Unable to swap oncall. Please find a manual replacement...!!!";
+        }
+        return "Success";
     }
 
     private boolean isOverlappingWithLeaves(Week week, LocalDate leaveStartDate, LocalDate leaveEndDate) {
@@ -232,10 +257,29 @@ public class Planner {
                 .filter(pw -> pw.person != requesterCurrentWeek.person)
                 .filter(pw-> pw.person.getLevel().ordinal() > Level.PSE3.ordinal())
                 .collect(Collectors.toList());
-            for (PersonWeek requesteeCurrentWeek : requesteeCurrentWeeks) {
+
+            List<PersonWeek> sortedRequesteeCurrentWeeks = requesteeCurrentWeeks.stream().sorted(new Comparator<PersonWeek>() {
+                @Override
+                public int compare(PersonWeek o1, PersonWeek o2) {
+                    PersonWeek personWeek1 = getPlanForPerson(o1.person).stream()
+                            .filter(pw -> pw.description.contains(ONCALL))
+                            .filter(pw -> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
+                            .findFirst().get();
+
+                    PersonWeek personWeek2 = getPlanForPerson(o2.person).stream()
+                            .filter(pw -> pw.description.contains(ONCALL))
+                            .filter(pw -> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
+                            .findFirst().get();
+
+                    return personWeek1.week.getWeekNumber() - personWeek2.week.getWeekNumber();
+                }
+            }).collect(Collectors.toList());
+
+            for (PersonWeek requesteeCurrentWeek : sortedRequesteeCurrentWeeks) {
                 PersonWeek requesteeOncallWeek = getPlanForPerson(requesteeCurrentWeek.person)
                     .stream()
                     .filter(pw -> pw.description.contains(ONCALL))
+                    .filter(pw-> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
                     .findFirst().get();
                 PersonWeek requesterOncallWeek = getPlanForPerson(requesterCurrentWeek.person)
                     .stream()
@@ -253,6 +297,10 @@ public class Planner {
                     requesteeCurrentWeek.occupied = 5;
                     break;
                 }
+            }
+
+            if (StringUtils.equalsIgnoreCase(requesterCurrentWeek.description, ONCALL)) {
+                throw new RuntimeException("Unable to swap oncall. Please figure a way out yourself...");
             }
 
         } catch (Exception e) {

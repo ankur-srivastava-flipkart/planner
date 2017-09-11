@@ -1,6 +1,8 @@
 package planner.core.model;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -55,6 +57,22 @@ public class PersonWeek {
 
     public int unoccupied() {
         return 5 - leaves - occupied;
+    }
+
+    public boolean isOncall () {
+        return StringUtils.equalsIgnoreCase(this.description, "ONCALL");
+    }
+
+    public boolean hasLeaves () {
+        return leaves > 0;
+    }
+
+    public float getAvailableBandWidth() {
+        return unoccupied() * person.productivity;
+    }
+
+    public boolean isCurrentWeek() {
+        return this.week.getStartDate().getWeekOfWeekyear() == LocalDate.now().getWeekOfWeekyear();
     }
 
 }
