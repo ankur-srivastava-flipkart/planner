@@ -223,6 +223,26 @@ public class Planner {
             }
     }
 
+
+    public String removeLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
+        List<PersonWeek> weeksOfInterest = plan.getPersonWeeks().stream()
+                .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
+                .filter(personWeek -> isOverlappingWithLeaves(personWeek.week, leaveStartDate, leaveEndDate))
+                .collect(Collectors.toList());
+        for (PersonWeek personWeek : weeksOfInterest) {
+            int noOfLeaveDays = personWeek.getLeaves();
+            LocalDate leaveStartInWeek = leaveStartDate.isAfter(personWeek.week.getStartDate()) ? leaveStartDate : personWeek.week.getStartDate();
+            LocalDate leaveEndInWeek = leaveEndDate.isBefore(personWeek.week.getEndDate()) ? leaveEndDate : personWeek.week.getEndDate();
+            for (LocalDate date = leaveStartInWeek; !date.isAfter(leaveEndInWeek); date = date.plusDays(1)) {
+                if (date.toDateTimeAtCurrentTime().getDayOfWeek() <= 5) {
+                    noOfLeaveDays = noOfLeaveDays > 0 ? --noOfLeaveDays : noOfLeaveDays;
+                }
+            }
+            personWeek.leaves = noOfLeaveDays;
+        }
+        return "done";
+    }
+
     public String addLeave(Person person, LocalDate leaveStartDate, LocalDate leaveEndDate) {
         List<PersonWeek> weeksOfInterest = plan.getPersonWeeks().stream()
             .filter(personWeek -> StringUtils.equalsIgnoreCase(personWeek.person.getName(), person.getName()))
@@ -354,4 +374,6 @@ public class Planner {
             .get()
             .person.getName();
     }
+
+
 }

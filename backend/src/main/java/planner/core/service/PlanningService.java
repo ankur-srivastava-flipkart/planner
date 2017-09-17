@@ -32,7 +32,7 @@ public class PlanningService {
 
     public Team validateTeamAndQuarter(String team, String quarter) {
         List<Team> team1 = setupService.getTeamByName(team);
-        if (team1.isEmpty()){
+        if (team1.isEmpty()) {
             throw new RuntimeException("No Team with Given Name found.");
         }
         if (team1.size() > 1) {
@@ -95,7 +95,7 @@ public class PlanningService {
         LocalDate startDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
         LocalDate endDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
 
-        int weekNumber =1;
+        int weekNumber = 1;
         while (startDate.isBefore(endDate.plusDays(7))) {
             Week e = new Week();
             e.setWeekNumber(weekNumber);
@@ -105,14 +105,14 @@ public class PlanningService {
             weeks.add(e);
             System.out.println(startDate.withDayOfWeek(DateTimeConstants.MONDAY) + " - " + startDate.withDayOfWeek(DateTimeConstants.SUNDAY));
             startDate = startDate.plusDays(7);
-            weekNumber +=1;
+            weekNumber += 1;
         }
 
         weekRepository.persist(weeks);
         return weeks;
     }
 
-    public Plan createNewPlan(Team team, String quarter){
+    public Plan createNewPlan(Team team, String quarter) {
         List<Week> weeks = fetchOrCreateWeeks(quarter);
         Plan plan = new Plan();
         Planner planner = new Planner();
@@ -122,7 +122,7 @@ public class PlanningService {
         planner.withPlan(plan).populatePlan();
         planner.withPlan(plan).populateOncall();
         planner.withPlan(plan).printPlan();
-       return plan;
+        return plan;
     }
 
     public Plan reset(String team, String quarter) {
@@ -146,18 +146,22 @@ public class PlanningService {
                 .map(Okr::new)
                 .collect(Collectors.toList());
 
-        okrList.stream().forEach(p-> {p.setTeam(team1);});
+        okrList.stream().forEach(p -> {
+            p.setTeam(team1);
+        });
         List<Okr> alreadyPresentOks = okrList.stream().filter(team1.getOkr()::contains).collect(Collectors.toList());
         List<Okr> newOkr = okrList.stream().filter(p -> !alreadyPresentOks.contains(p)).collect(Collectors.toList());
 
         planner.updateOKR(newOkr);
-        newOkr.stream().forEach(p-> {team1.addOkr(p);});
+        newOkr.stream().forEach(p -> {
+            team1.addOkr(p);
+        });
         okrRepository.persist(newOkr);
         setupService.saveTeam(team1);
         return alreadyPresentOks;
     }
 
-    public PersonWeek getPlanForPersonWeek(String team, String quarter,String member, LocalDate date) {
+    public PersonWeek getPlanForPersonWeek(String team, String quarter, String member, LocalDate date) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(member);
@@ -171,6 +175,13 @@ public class PlanningService {
         return planner.addLeave(p, date, date1);
     }
 
+    public String removeLeave(String team, String quarter, String actor, LocalDate date, LocalDate date1) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        Person p = setupService.getPersonByName(actor);
+        return planner.removeLeave(p, date, date1);
+    }
+
     public String getOncall(String team, String quarter, LocalDate date) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
@@ -180,7 +191,7 @@ public class PlanningService {
     public int getBandwidth(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        return  planner.getBandwidth();
+        return planner.getBandwidth();
     }
 
     public void resetPlanForMember(String team, String quarter, String actor) {
@@ -191,4 +202,5 @@ public class PlanningService {
         planRepository.savePlan(planner.getPlan());
         planner.addPlanForPerson(p);
     }
+
 }

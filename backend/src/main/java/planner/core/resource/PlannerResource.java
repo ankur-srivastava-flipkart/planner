@@ -91,13 +91,21 @@ public class PlannerResource {
         }
         planningService.reset(team, quarter);
         return "Done";
-      case MODIFY_LEAVE:
+      case ADD_LEAVE:
         if (action.param.containsKey(PARAMS.DATE)) {
           date = new LocalDate(action.param.get(PARAMS.DATE));
           return planningService.addLeave(team, quarter, action.actor, date, date);
         } else {
           String[] dates = action.param.get(PARAMS.PERIOD).split("/");
          return planningService.addLeave(team, quarter, action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
+        }
+      case REMOVE_LEAVE:
+        if (action.param.containsKey(PARAMS.DATE)) {
+          date = new LocalDate(action.param.get(PARAMS.DATE));
+          return planningService.removeLeave(team, quarter, action.actor, date, date);
+        } else {
+          String[] dates = action.param.get(PARAMS.PERIOD).split("/");
+          return planningService.removeLeave(team, quarter, action.actor, new LocalDate(dates[0]),new LocalDate(dates[1]));
         }
       case GET_QTR_PLAN: return "http://10.85.250.122:35432/planner/" + team + "/" + quarter + "/plan";
       case FETCH_ONCALL:
@@ -122,7 +130,7 @@ public class PlannerResource {
   }
 
   public enum PlanAction {
-    FETCH_TASKS, INIT_QTR_PLAN, MODIFY_LEAVE, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, GET_BANDWIDTH
+    FETCH_TASKS, INIT_QTR_PLAN, MODIFY_LEAVE, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, ADD_LEAVE, REMOVE_LEAVE, GET_BANDWIDTH
   }
 
   public enum PARAMS {
