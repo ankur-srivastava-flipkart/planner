@@ -15,6 +15,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +55,7 @@ public class PlannerResource {
     planningService.reset(team, quarter);
   }
 
-  @GET
+  @POST
   @Path("/addOkr/{okr}")
   @UnitOfWork
   public String addOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, @PathParam("okr") String okr){
@@ -62,6 +63,13 @@ public class PlannerResource {
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
     List<Okr> unAddedOkrs = planningService.updateOKR(team, quarter, okr);
     return "Added new OKRs. Already present OKRs : " + unAddedOkrs.stream().map(n -> n.toString()).collect(Collectors.joining(" * "));
+  }
+
+  @GET
+  @Path("/okr")
+  @UnitOfWork
+  public Set<Okr> getOkr(@PathParam("team") String team, @PathParam("quarter") String quarter){
+    return planningService.getAllOKR(team, quarter);
   }
 
   @POST
@@ -123,14 +131,21 @@ public class PlannerResource {
         }
         planningService.updateOKR(team, quarter, action.param.get(PARAMS.OKR));
         return "Done";
+      case GET_OKR:
+        planningService.getAllOKR(team, quarter);
+        return "Done";
       case GET_BANDWIDTH:
         return String.valueOf(planningService.getBandwidth(team, quarter));
+
+      case GET_REMAINING_BANDWIDTH:
+        LocalDate startDate = action.param.get(PARAMS.DATE) != null ? new LocalDate(action.param.get(PARAMS.DATE)) : new LocalDate();
+        return String.valueOf(planningService.getRemainingBandwidth(team, quarter, startDate));
       default: return "Action Not Supported";
     }
   }
 
   public enum PlanAction {
-    FETCH_TASKS, INIT_QTR_PLAN, MODIFY_LEAVE, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, ADD_LEAVE, REMOVE_LEAVE, GET_BANDWIDTH
+    FETCH_TASKS, INIT_QTR_PLAN, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, ADD_LEAVE, REMOVE_LEAVE, GET_REMAINING_BANDWIDTH, GET_OKR, GET_BANDWIDTH
   }
 
   public enum PARAMS {

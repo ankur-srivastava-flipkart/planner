@@ -353,10 +353,17 @@ public class Planner {
                 .get();
     }
 
-    public int getBandwidth() {
+    public int getAvailableBandwidthForQuarter() {
         return plan.getPersonWeeks().stream()
             .mapToInt(PersonWeek::unoccupied)
             .sum();
+    }
+
+    public int getRemainingBandwidthForQuarter(LocalDate startDate) {
+        return plan.getPersonWeeks().stream()
+                .filter(p -> p.week.getStartDate().isAfter(startDate))
+                .mapToInt(PersonWeek::unoccupied)
+                .sum();
     }
 
     public List<PersonWeek> getPlanForPerson(Person person) {

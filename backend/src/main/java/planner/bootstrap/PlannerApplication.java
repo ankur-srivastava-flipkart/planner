@@ -57,7 +57,8 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
             }
         });
 
-        bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/planner-ui", "index.html"));
+        bootstrap.addBundle(new AssetsBundle("/swagger-ui", "/swagger-ui", "index.html","swaggerui"));
+        bootstrap.addBundle(new AssetsBundle("/planner-ui", "/planner-ui", "index.html", "plannerui"));
 
         bootstrap.addBundle(hibernateBundle);
 

@@ -10,6 +10,7 @@ import planner.core.repository.WeekRepository;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -144,6 +145,7 @@ public class PlanningService {
 
         List<Okr> okrList = Arrays.stream(okr.split("\\*"))
                 .map(Okr::new)
+                .map(p -> {p.setQuarter(quarter); return p; } )
                 .collect(Collectors.toList());
 
         okrList.stream().forEach(p -> {
@@ -191,7 +193,13 @@ public class PlanningService {
     public int getBandwidth(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        return planner.getBandwidth();
+        return planner.getAvailableBandwidthForQuarter();
+    }
+
+    public int getRemainingBandwidth(String team, String quarter, LocalDate startDate) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        return planner.getRemainingBandwidthForQuarter(startDate);
     }
 
     public void resetPlanForMember(String team, String quarter, String actor) {
@@ -203,4 +211,12 @@ public class PlanningService {
         planner.addPlanForPerson(p);
     }
 
+    public Set<Okr> getAllOKR(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        return planner.getPlan().getPersonWeeks().stream()
+                .flatMap(listContainer -> listContainer.getOkrList().stream())
+                .collect(Collectors.toSet());
+
+    }
 }
