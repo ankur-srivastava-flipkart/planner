@@ -53,6 +53,9 @@
             <thead>
             <tr>
                 <th class="sortable">
+                    Id
+                </th>
+                <th class="sortable">
                     Description
                 </th>
                 <th class="sortable">
@@ -73,11 +76,11 @@
                 <th class="sortable">
                     willSpill
                 </th>
-
             </tr>
             </thead>
             <tbody>
             <tr grid-item>
+                <td ng-bind="item.id"></td>
                 <td ng-bind="item.description"></td>
                 <td ng-bind="item.jiraEpic"></td>
                 <td ng-bind="item.effortinPersonDays"></td>

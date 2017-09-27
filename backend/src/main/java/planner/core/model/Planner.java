@@ -381,5 +381,9 @@ public class Planner {
     }
 
 
-
+    public void removeOkr(Integer okrId) {
+        plan.getPersonWeeks().forEach(
+                pw-> pw.okrAllocations.removeIf(al -> al.getOkr().getId() == okrId)
+        );
+    }
 }

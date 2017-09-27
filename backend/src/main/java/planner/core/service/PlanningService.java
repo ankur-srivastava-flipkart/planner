@@ -217,6 +217,13 @@ public class PlanningService {
         planRepository.savePlan(planner.getPlan());
     }
 
+    public void removeOkr(String team, String quarter, Integer okrId) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        planner.removeOkr(okrId);
+        planRepository.savePlan(planner.getPlan());
+    }
+
     public void populateOncall(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
