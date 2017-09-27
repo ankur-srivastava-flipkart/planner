@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 @Data
 public class Planner {
 
-    public static final String ONCALL = "Oncall";
     private Plan plan;
 
     public Planner withPlan(Plan plan) {
@@ -24,7 +23,6 @@ public class Planner {
     }
 
     public void updateOKR(List<Okr> okrList) {
-
         for (Okr eachOkr : okrList) {
             if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=3) {
                 eachOkr.willSpill = blockPeople(Level.PSE2, eachOkr, true);
@@ -47,14 +45,10 @@ public class Planner {
     public boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
 
         List<List<Person>> allCombinations = new ArrayList<>();
-
         List<Person> values = plan.getTeam().getTeamMember().stream().filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
-
-
         for (int i = 1 ; i <= okr.parallelism ; i++) {
             allCombinations.addAll( Permute.getAllCombinations(values.toArray(new Person[values.size()]),values.size(), i));
         }
-
 
         Map<List<Person>, LocalDate> endDateMap = new HashMap<>();
         for(List<Person> eachCombination : allCombinations) {
@@ -65,7 +59,7 @@ public class Planner {
 
                 for (Person member : eachCombination) {
                     PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.getStartDate());
-                    totalWeekEffort += (5 - planForPersonWeek.occupied - planForPersonWeek.leaves)*member.productivity;
+                    totalWeekEffort += (5 - planForPersonWeek.occupied() - planForPersonWeek.leaves)*member.productivity;
                 }
                 effortRemaining -= Math.round(totalWeekEffort);
                 System.out.println(week.getWeekNumber() + " , " + effortRemaining + " - " + totalWeekEffort);
@@ -102,13 +96,12 @@ public class Planner {
                     continue;
                 }
                 if (efforRemaining >= planForPersonWeek.unoccupied() * member.productivity) {
-                    efforRemaining -= planForPersonWeek.unoccupied() * member.productivity;
-                    planForPersonWeek.occupied += planForPersonWeek.unoccupied();
-                    planForPersonWeek.okrList.add(okr);
+                    float effortPlannedForCurrentWeek = planForPersonWeek.unoccupied() * member.productivity;
+                    efforRemaining -= effortPlannedForCurrentWeek;
+                    planForPersonWeek.okrAllocations.add(new OkrAllocation(okr, planForPersonWeek.unoccupied()));
                 } else {
-                    planForPersonWeek.occupied += Math.ceil(efforRemaining / member.productivity);
                     efforRemaining -= efforRemaining;
-                    planForPersonWeek.okrList.add(okr);
+                    planForPersonWeek.okrAllocations.add(new OkrAllocation(okr , (float)Math.ceil(efforRemaining / member.productivity)));
                 }
                 if ((int)efforRemaining == 0) {
                     break;
@@ -125,7 +118,19 @@ public class Planner {
         return false;
     }
 
-    public void populateOncall() {
+    public void populateDevOps(Okr devOpsOkr) {
+
+        List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() <= Level.PSE3.ordinal())
+                .collect(Collectors.toList());
+
+        plan.getPersonWeeks().stream()
+                .filter(pw -> eligibleMembers.contains(pw.getPerson()))
+                .forEach(pw ->
+                            pw.okrAllocations.add(new OkrAllocation(devOpsOkr,(float)(5-pw.getOccupied()) * 0.33f))
+                );
+    }
+
+    public void populateOncall(Okr oncall) {
         int i = 0;
         for (Week week : plan.getWeeks()) {
             final int tempV = i;
@@ -149,8 +154,7 @@ public class Planner {
                 System.out.println(matchedWeeks);
                 throw new RuntimeException("More than one weeks matched");
             }
-            matchedWeeks.get(0).description = "Oncall";
-            matchedWeeks.get(0).occupied = 5 - matchedWeeks.get(0).leaves;
+            matchedWeeks.get(0).okrAllocations.add(new OkrAllocation(oncall, 5 - matchedWeeks.get(0).leaves ));
             i = i+1;
         }
     }
@@ -260,12 +264,10 @@ public class Planner {
             personWeek.leaves += noOfLeaveDays;
         }
         try {
-            for (PersonWeek personWeek : weeksOfInterest) {
-                if (personWeek.description.contains(ONCALL)) {
-
-                    swapOncall(personWeek);
-                }
-            }
+                weeksOfInterest.stream()
+                        .filter(pw -> pw.isOncall())
+                        .forEach( pw ->
+                            swapOncall(pw, pw.getOncallOkr()));
         } catch (Exception e) {
             return "Leaves Added. Unable to swap oncall. Please find a manual replacement...!!!";
         }
@@ -278,7 +280,7 @@ public class Planner {
             || (!week.getEndDate().isBefore(leaveStartDate) && !week.getEndDate().isAfter(leaveEndDate));
     }
 
-    public void swapOncall(PersonWeek requesterCurrentWeek) {
+    public void swapOncall(PersonWeek requesterCurrentWeek, Okr oncall) {
         try {
             List<PersonWeek> requesteeCurrentWeeks = getPlanForWeek(requesterCurrentWeek.week.getStartDate())
                 .stream()
@@ -291,12 +293,12 @@ public class Planner {
                 @Override
                 public int compare(PersonWeek o1, PersonWeek o2) {
                     PersonWeek personWeek1 = getPlanForPerson(o1.person).stream()
-                            .filter(pw -> pw.description.contains(ONCALL))
+                            .filter(pw -> pw.isOncall())
                             .filter(pw -> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
                             .findFirst().get();
 
                     PersonWeek personWeek2 = getPlanForPerson(o2.person).stream()
-                            .filter(pw -> pw.description.contains(ONCALL))
+                            .filter(pw -> pw.isOncall())
                             .filter(pw -> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
                             .findFirst().get();
 
@@ -307,7 +309,7 @@ public class Planner {
             for (PersonWeek requesteeCurrentWeek : sortedRequesteeCurrentWeeks) {
                 PersonWeek requesteeOncallWeek = getPlanForPerson(requesteeCurrentWeek.person)
                     .stream()
-                    .filter(pw -> pw.description.contains(ONCALL))
+                    .filter(pw -> pw.isOncall())
                     .filter(pw-> pw.week.getWeekNumber() > requesterCurrentWeek.week.getWeekNumber())
                     .findFirst().get();
                 PersonWeek requesterOncallWeek = getPlanForPerson(requesterCurrentWeek.person)
@@ -316,19 +318,15 @@ public class Planner {
                     .findAny()
                     .get();
                 if (requesterOncallWeek.leaves == 0) {
-                    requesterOncallWeek.description = ONCALL;
-                    requesterOncallWeek.occupied = 5;
-                    requesteeOncallWeek.description = "";
-                    requesteeOncallWeek.occupied = 0;
-                    requesterCurrentWeek.description = "";
-                    requesterCurrentWeek.occupied = 0;
-                    requesteeCurrentWeek.description = ONCALL;
-                    requesteeCurrentWeek.occupied = 5;
+                    requesterOncallWeek.getOkrAllocations().add(new OkrAllocation(oncall, 5));
+                    requesteeOncallWeek.getOkrAllocations().removeIf(p -> StringUtils.equalsIgnoreCase(p.getOkr().description, "ONCALL"));
+                    requesterCurrentWeek.getOkrAllocations().removeIf(p -> StringUtils.equalsIgnoreCase(p.getOkr().description, "ONCALL"));
+                    requesteeOncallWeek.getOkrAllocations().add(new OkrAllocation(oncall, 5));
                     break;
                 }
             }
 
-            if (StringUtils.equalsIgnoreCase(requesterCurrentWeek.description, ONCALL)) {
+            if (requesterCurrentWeek.isOncall()) {
                 throw new RuntimeException("Unable to swap oncall. Please figure a way out yourself...");
             }
 
@@ -353,16 +351,16 @@ public class Planner {
                 .get();
     }
 
-    public int getAvailableBandwidthForQuarter() {
+    public double getAvailableBandwidthForQuarter() {
         return plan.getPersonWeeks().stream()
-            .mapToInt(PersonWeek::unoccupied)
+            .mapToDouble(PersonWeek::getAvailableBandWidth)
             .sum();
     }
 
-    public int getRemainingBandwidthForQuarter(LocalDate startDate) {
+    public double getRemainingBandwidthForQuarter(LocalDate startDate) {
         return plan.getPersonWeeks().stream()
                 .filter(p -> p.week.getStartDate().isAfter(startDate))
-                .mapToInt(PersonWeek::unoccupied)
+                .mapToDouble(PersonWeek::getAvailableBandWidth)
                 .sum();
     }
 
@@ -381,6 +379,7 @@ public class Planner {
             .get()
             .person.getName();
     }
+
 
 
 }

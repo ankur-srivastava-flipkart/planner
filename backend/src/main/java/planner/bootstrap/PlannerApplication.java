@@ -31,7 +31,7 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
     }
 
     private final HibernateBundle<PlannerConfiguration> hibernateBundle
-            = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class, Okr.class, Week.class, PersonWeek.class, Plan.class) {
+            = new HibernateBundle<PlannerConfiguration>(Person.class, Team.class, Okr.class, Week.class, PersonWeek.class, Plan.class, OkrAllocation.class) {
         @Override
         public DataSourceFactory getDataSourceFactory(
                 PlannerConfiguration configuration

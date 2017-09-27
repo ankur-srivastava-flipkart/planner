@@ -6,6 +6,7 @@
     td {border:1px solid grey; font-size: x-small}
     th {border:1px solid grey; font-size: x-small}
     p {font-size: x-small}
+    td {font-size: x-small}
     .oncall { background-color: LightPink;}
     .leaves { background-color: LightSkyBlue ;}
     .current { background-color: #DDDDDD;}
@@ -24,21 +25,17 @@
         <td>${member.name}</td>
         <#list planner.getPlanForPerson(member) as pw>
             <td ${pw.isOncall()?then("class = 'oncall'",pw.hasLeaves()?then("class = 'leaves'",""))} ${pw.isCurrentWeek()?then("class = 'current'", "")}>
-                <#if pw.isOncall() >
-                    <b>On-call</b>
-
-                <#else>
                         <#if pw.leaves gt 0 >
                             Leaves : <b>${pw.leaves}</b>
                         </#if>
+                        <#if pw.getOccupied() lt 5>
+                            ${pw.unoccupied()} PD avl
+                        </#if>
                     <#if pw.okrList?has_content>
-                        <br>
-                        OKRs:
                         <#list pw.okrList as okr>
                             <li>${okr.description}</li>
                         </#list>
                     </#if>
-                </#if>
             </td>
         </#list>
     </tr>
@@ -115,7 +112,7 @@
                 function getServerData(params, callback) {
                     $http.get('/planner/${planner.plan.getTeam().getName()}/${planner.plan.getQuarter()}/okr').then(function (response) {
                         var data = response.data,
-                                totalItems = 1;
+                                totalItems = 100;
                         callback(data, totalItems);
                     });
                 };

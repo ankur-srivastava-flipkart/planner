@@ -23,6 +23,7 @@ public class PlannerTest {
             .addEntityClass(Plan.class)
             .addEntityClass(PersonWeek.class)
             .addEntityClass(Week.class)
+            .addEntityClass(OkrAllocation.class)
 
             .build();
     private List<CreatePersonRequest> getDummyPeople() {

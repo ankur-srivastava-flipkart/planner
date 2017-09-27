@@ -121,7 +121,6 @@ public class PlanningService {
         plan.setQuarter(quarter);
         plan.setWeeks(weeks);
         planner.withPlan(plan).populatePlan();
-        planner.withPlan(plan).populateOncall();
         planner.withPlan(plan).printPlan();
         return plan;
     }
@@ -154,7 +153,7 @@ public class PlanningService {
         List<Okr> alreadyPresentOks = okrList.stream().filter(team1.getOkr()::contains).collect(Collectors.toList());
         List<Okr> newOkr = okrList.stream().filter(p -> !alreadyPresentOks.contains(p)).collect(Collectors.toList());
 
-        planner.updateOKR(newOkr);
+      //  planner.updateOKR(newOkr);
         newOkr.stream().forEach(p -> {
             team1.addOkr(p);
         });
@@ -193,13 +192,13 @@ public class PlanningService {
     public int getBandwidth(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        return planner.getAvailableBandwidthForQuarter();
+        return new Double(planner.getAvailableBandwidthForQuarter()).intValue();
     }
 
     public int getRemainingBandwidth(String team, String quarter, LocalDate startDate) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        return planner.getRemainingBandwidthForQuarter(startDate);
+        return new Double(planner.getRemainingBandwidthForQuarter(startDate)).intValue();
     }
 
     public void resetPlanForMember(String team, String quarter, String actor) {
@@ -207,16 +206,31 @@ public class PlanningService {
         Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(actor);
         planner.getPlan().getPersonWeeks().removeIf(pw -> pw.getPerson().getId() == p.getId());
-        planRepository.savePlan(planner.getPlan());
         planner.addPlanForPerson(p);
+        planRepository.savePlan(planner.getPlan());
+    }
+
+    public void addDevOps(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        planner.populateDevOps(okrRepository.getOkrByDescription("DEVOPS", team1.getId()));
+        planRepository.savePlan(planner.getPlan());
+    }
+
+    public void populateOncall(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        planner.populateOncall(okrRepository.getOkrByDescription("ONCALL", team1.getId()));
+        planRepository.savePlan(planner.getPlan());
     }
 
     public Set<Okr> getAllOKR(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        return planner.getPlan().getPersonWeeks().stream()
-                .flatMap(listContainer -> listContainer.getOkrList().stream())
+        Set<Okr> collect = planner.getPlan().getPersonWeeks().stream()
+                .flatMap(pw -> pw.getOkrList().stream())
                 .collect(Collectors.toSet());
+        return collect;
 
     }
 }

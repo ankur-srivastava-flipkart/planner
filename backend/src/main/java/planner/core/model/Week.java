@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Data
 @NamedQueries({
         @NamedQuery(name = "planner.core.model.week.findByQuarter",
-                query = "select p from Okr p where p.quarter like :quarter")
+                query = "select p from Week p where p.quarter like :quarter")
 })
 public class Week {
     @Id

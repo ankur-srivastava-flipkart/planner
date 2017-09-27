@@ -19,10 +19,9 @@ import javax.persistence.*;
                 query = "select p from Okr p where p.quarter like :quarter and p.team.name like :name"),
         @NamedQuery(name = "planner.core.model.okr.findByName",
                 query = "select p from Okr p"
-                        + " where p.description LIKE :name")
+                        + " where p.description LIKE :name and p.team.id = :team")
 
 })
-@JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class, property="@id")
 public class Okr {
 
     @Id
@@ -38,6 +37,7 @@ public class Okr {
     int status = 0;
     boolean willSpill = false;
 
+    @JsonIdentityInfo(generator=ObjectIdGenerators.PropertyGenerator.class, property="id")
     @ManyToOne
     Team team;
 

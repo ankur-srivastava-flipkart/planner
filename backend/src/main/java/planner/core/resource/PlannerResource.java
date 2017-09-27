@@ -5,6 +5,7 @@ import io.dropwizard.hibernate.UnitOfWork;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.joda.time.LocalDate;
+import planner.core.dto.AddOkrRequest;
 import planner.core.model.Okr;
 import planner.core.service.PlanningService;
 import planner.core.view.PlannerView;
@@ -56,12 +57,13 @@ public class PlannerResource {
   }
 
   @POST
-  @Path("/addOkr/{okr}")
+  @Path("/addOkr")
   @UnitOfWork
-  public String addOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, @PathParam("okr") String okr){
+  public String addOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, List<AddOkrRequest> requestList){
 //    Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:5");
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
-    List<Okr> unAddedOkrs = planningService.updateOKR(team, quarter, okr);
+    List<Okr> unAddedOkrs = planningService.updateOKR(team, quarter, requestList.stream().map(p-> p.getOkr()).collect(Collectors.joining("*")));
+
     return "Added new OKRs. Already present OKRs : " + unAddedOkrs.stream().map(n -> n.toString()).collect(Collectors.joining(" * "));
   }
 
@@ -136,7 +138,12 @@ public class PlannerResource {
         return "Done";
       case GET_BANDWIDTH:
         return String.valueOf(planningService.getBandwidth(team, quarter));
-
+      case ADD_DEVOPS:
+         planningService.addDevOps(team, quarter);
+        return "done";
+      case ADD_ONCALL:
+        planningService.populateOncall(team, quarter);
+        return "done";
       case GET_REMAINING_BANDWIDTH:
         LocalDate startDate = action.param.get(PARAMS.DATE) != null ? new LocalDate(action.param.get(PARAMS.DATE)) : new LocalDate();
         return String.valueOf(planningService.getRemainingBandwidth(team, quarter, startDate));
@@ -145,7 +152,7 @@ public class PlannerResource {
   }
 
   public enum PlanAction {
-    FETCH_TASKS, INIT_QTR_PLAN, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, ADD_LEAVE, REMOVE_LEAVE, GET_REMAINING_BANDWIDTH, GET_OKR, GET_BANDWIDTH
+    FETCH_TASKS, INIT_QTR_PLAN, GET_QTR_PLAN, FETCH_ONCALL, ADD_OKR, RESET_PLAN_FOR_PERSON, ADD_LEAVE, REMOVE_LEAVE, GET_REMAINING_BANDWIDTH, GET_OKR, ADD_DEVOPS, ADD_ONCALL, GET_BANDWIDTH
   }
 
   public enum PARAMS {
