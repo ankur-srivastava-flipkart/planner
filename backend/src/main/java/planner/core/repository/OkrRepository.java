@@ -37,4 +37,5 @@ public class OkrRepository extends AbstractDAO<Okr> {
                 .setParameter("name","%" + name + "%")
                 .setParameter("team", id));
     }
+
 }

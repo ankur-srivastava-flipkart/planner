@@ -28,12 +28,9 @@
                         <#if pw.leaves gt 0 >
                             Leaves : <b>${pw.leaves}</b>
                         </#if>
-                        <#if pw.getOccupied() lt 5>
-                            ${pw.unoccupied()} PD avl
-                        </#if>
                     <#if pw.okrList?has_content>
-                        <#list pw.okrList as okr>
-                            <li>${okr.description}</li>
+                        <#list pw.okrAllocations as okrAllocation>
+                            <li>${okrAllocation.okr.description}(${okrAllocation.daysAllocated})</li>
                         </#list>
                     </#if>
             </td>
@@ -87,7 +84,7 @@
                 <td ng-bind="item.complexity"></td>
                 <td ng-bind="item.priority"></td>
                 <td ng-bind="item.parallelism"></td>
-                <td ng-bind="item.willSpill"></td>
+                <td ng-bind="item.spillOver"></td>
             </tr>
             </tbody>
         </table>

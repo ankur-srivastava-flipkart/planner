@@ -1,17 +1,18 @@
 package planner.core.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
+import planner.core.dto.AddOkrRequest;
 import planner.core.model.*;
 import planner.core.repository.OkrRepository;
 import planner.core.repository.PlanRepository;
 import planner.core.repository.WeekRepository;
 
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by ankur.srivastava on 01/09/17.
@@ -138,10 +139,56 @@ public class PlanningService {
         return plan;
     }
 
-    public List<Okr> updateOKR(String team, String quarter, String okr) {
+    public void rePlan(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
 
+        getAllOKR(team, quarter).stream().filter(p -> !p.getDescription().equalsIgnoreCase("ONCALL") && !p.getDescription().equalsIgnoreCase("DEVOPS"))
+                .forEach(p -> removeOkr(team, quarter, p.getId()));
+
+        okrRepository.findAllOkrByTeamAndQuarter(team, quarter).stream()
+                .filter(p -> !p.getDescription().equalsIgnoreCase("ONCALL") && !p.getDescription().equalsIgnoreCase("DEVOPS"))
+                .sorted(new Comparator<Okr>() {
+                    @Override
+                    public int compare(Okr o1, Okr o2) {
+                        return o1.getPriority() - o2.getPriority();
+                    }
+                }).forEach(okr -> {
+            List<Person> preferredResources = new ArrayList<>();
+            if (StringUtils.isNotBlank(okr.getPreferredResource())) {
+                preferredResources = Arrays.stream(okr.getPreferredResource().split(","))
+                        .map(e -> setupService.getPersonByName(e))
+                        .collect(Collectors.toList());
+            }
+            planner.updateOKR(okr, preferredResources, okr.getPreferredStartDate());
+        });
+    }
+
+    public void planOkr(String team, String quarter, List<AddOkrRequest> okrs) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+
+        Stream<AddOkrRequest> sortedOkrs = okrs.stream().sorted(new Comparator<AddOkrRequest>() {
+            @Override
+            public int compare(AddOkrRequest o1, AddOkrRequest o2) {
+                Okr okr1 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId());
+                Okr okr2 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId());
+                return okr1.getPriority() - okr2.getPriority();
+            }
+        });
+        sortedOkrs.forEach(
+                p ->  {
+                    Okr okr = okrRepository.getOkrByDescription(p.getOkr(), team1.getId());
+                    List<Person> preferredResource = p.getPreferredResource().stream().map(e -> setupService.getPersonByName(e)).collect(Collectors.toList());
+                    planner.updateOKR(okr, preferredResource, p.getPreferredStartDate());
+                    okr.setPreferredResource(p.getPreferredResource().stream().collect(Collectors.joining(",")));
+                    okr.setPreferredStartDate(p.getPreferredStartDate());
+                }
+        );
+    }
+
+    public List<Okr> addOkr(String team, String quarter, String okr) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
         List<Okr> okrList = Arrays.stream(okr.split("\\*"))
                 .map(Okr::new)
                 .map(p -> {p.setQuarter(quarter); return p; } )
@@ -153,7 +200,6 @@ public class PlanningService {
         List<Okr> alreadyPresentOks = okrList.stream().filter(team1.getOkr()::contains).collect(Collectors.toList());
         List<Okr> newOkr = okrList.stream().filter(p -> !alreadyPresentOks.contains(p)).collect(Collectors.toList());
 
-      //  planner.updateOKR(newOkr);
         newOkr.stream().forEach(p -> {
             team1.addOkr(p);
         });

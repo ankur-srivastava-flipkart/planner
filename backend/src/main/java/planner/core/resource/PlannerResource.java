@@ -6,6 +6,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.joda.time.LocalDate;
 import planner.core.dto.AddOkrRequest;
+import planner.core.dto.LeaveRequest;
 import planner.core.model.Okr;
 import planner.core.service.PlanningService;
 import planner.core.view.PlannerView;
@@ -62,16 +63,55 @@ public class PlannerResource {
     public String addOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, List<AddOkrRequest> requestList) {
 //    Okr okr = new Okr("MPS:jir1:60:COMPLEX:1:5");
 //    Okr okr1 = new Okr("GST:jir2:60:COMPLEX:1:5");
-        List<Okr> unAddedOkrs = planningService.updateOKR(team, quarter, requestList.stream().map(p -> p.getOkr()).collect(Collectors.joining("*")));
-
+        List<Okr> unAddedOkrs = planningService.addOkr(team, quarter, requestList.stream().map(p -> p.getOkr()).collect(Collectors.joining("*")));
         return "Added new OKRs. Already present OKRs : " + unAddedOkrs.stream().map(n -> n.toString()).collect(Collectors.joining(" * "));
     }
+
+    @POST
+    @Path("/clearPlanForOkr/{okrId}")
+    @UnitOfWork
+    public String removeOkr(@PathParam("team") String team, @PathParam("quarter") String quarter,  @PathParam("okrId")Integer okrId) {
+       planningService.removeOkr(team, quarter,okrId);
+       return "done";
+    }
+
+    @POST
+    @Path("/planOkr")
+    @UnitOfWork
+    public String planOkr(@PathParam("team") String team, @PathParam("quarter") String quarter, List<AddOkrRequest> requestList) {
+        planningService.planOkr(team, quarter, requestList);
+        return "done";
+    }
+
+    @POST
+    @Path("/rePlan")
+    @UnitOfWork
+    public String rePlan(@PathParam("team") String team, @PathParam("quarter") String quarter) {
+        planningService.rePlan(team, quarter);
+        return "done";
+    }
+
+
 
     @GET
     @Path("/okr")
     @UnitOfWork
     public Set<Okr> getOkr(@PathParam("team") String team, @PathParam("quarter") String quarter) {
         return planningService.getAllOKR(team, quarter);
+    }
+
+    @POST
+    @Path("/addLeave")
+    @UnitOfWork
+    public String addLeave(@PathParam("team") String team, @PathParam("quarter") String quarter, List<LeaveRequest> requests) {
+        return requests.stream().map(req -> planningService.addLeave(team, quarter, req.getActor(), req.getWeekOf(), req.getWeekOf().plusDays(req.getNumberOfDays()-1))).collect(Collectors.joining(","));
+    }
+
+    @POST
+    @Path("/removeLeave")
+    @UnitOfWork
+    public String removeLeave(@PathParam("team") String team, @PathParam("quarter") String quarter, List<LeaveRequest> requests) {
+        return requests.stream().map(req -> planningService.removeLeave(team, quarter, req.getActor(), req.getWeekOf(), req.getWeekOf().plusDays(req.getNumberOfDays()-1))).collect(Collectors.joining(","));
     }
 
     @POST
@@ -101,22 +141,6 @@ public class PlannerResource {
                 }
                 planningService.reset(team, quarter);
                 return "Done";
-            case ADD_LEAVE:
-                if (action.param.containsKey(PARAMS.DATE)) {
-                    date = new LocalDate(action.param.get(PARAMS.DATE));
-                    return planningService.addLeave(team, quarter, action.actor, date, date);
-                } else {
-                    String[] dates = action.param.get(PARAMS.PERIOD).split("/");
-                    return planningService.addLeave(team, quarter, action.actor, new LocalDate(dates[0]), new LocalDate(dates[1]));
-                }
-            case REMOVE_LEAVE:
-                if (action.param.containsKey(PARAMS.DATE)) {
-                    date = new LocalDate(action.param.get(PARAMS.DATE));
-                    return planningService.removeLeave(team, quarter, action.actor, date, date);
-                } else {
-                    String[] dates = action.param.get(PARAMS.PERIOD).split("/");
-                    return planningService.removeLeave(team, quarter, action.actor, new LocalDate(dates[0]), new LocalDate(dates[1]));
-                }
             case GET_QTR_PLAN:
                 return "http://10.85.250.122:35432/planner/" + team + "/" + quarter + "/plan";
             case FETCH_ONCALL:
@@ -132,7 +156,7 @@ public class PlannerResource {
                 if (!action.actor.equals("ANKUR")) {
                     return "Sorry! You are not the boss.";
                 }
-                planningService.updateOKR(team, quarter, action.param.get(PARAMS.OKR));
+                planningService.addOkr(team, quarter, action.param.get(PARAMS.OKR));
                 return "Done";
             case GET_OKR:
                 planningService.getAllOKR(team, quarter);

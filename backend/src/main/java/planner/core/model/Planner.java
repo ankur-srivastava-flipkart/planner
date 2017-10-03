@@ -22,39 +22,77 @@ public class Planner {
         return this;
     }
 
-    public void updateOKR(List<Okr> okrList) {
-        for (Okr eachOkr : okrList) {
-            if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=3) {
-                eachOkr.willSpill = blockPeople(Level.PSE2, eachOkr, true);
-            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=10) {
-                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, true);
-            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays >10) {
-                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, false);
-            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays <=10) {
-                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, true);
-            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays >10) {
-                eachOkr.willSpill = blockPeople(Level.SDE1, eachOkr, false);
-            } else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays <=10) {
-                eachOkr.willSpill = blockPeople(Level.SDE2, eachOkr, true);
-            }  else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays > 10) {
-                eachOkr.willSpill = blockPeople(Level.SDE2, eachOkr, false);
-            }
-        }
+    public void updateOKR(Okr okr, List<Person> preferredResource, LocalDate preferredStartDate) {
+        List<List<Person>> possibleAllocations = possibleAllocations(okr, preferredResource);
+        blockPeople(okr,possibleAllocations,preferredStartDate == null ? new LocalDate() : preferredStartDate);
     }
 
-    public boolean blockPeople(Level levelOnwards, Okr okr, boolean allSameLevelPossibleBestEffort) {
+    public List<List<Person>> possibleAllocations(Okr okr, List<Person> preferredResource) {
+        List<Person> fixedResource = new ArrayList<>();
+        Level maxLevel;
 
-        List<List<Person>> allCombinations = new ArrayList<>();
-        List<Person> values = plan.getTeam().getTeamMember().stream().filter(e -> e.level.ordinal() >= levelOnwards.ordinal()).collect(Collectors.toList());
-        for (int i = 1 ; i <= okr.parallelism ; i++) {
-            allCombinations.addAll( Permute.getAllCombinations(values.toArray(new Person[values.size()]),values.size(), i));
+        if (!preferredResource.isEmpty()) {
+            fixedResource.addAll(preferredResource);
+            maxLevel = preferredResource.stream().max(new Comparator<Person>() {
+                @Override
+                public int compare(Person o1, Person o2) {
+                    return o1.level.ordinal() - o2.level.ordinal();
+                }
+            }).get().getLevel();
+        } else {
+            maxLevel =  preferredMaxLevel(okr);
+        }
+        if (fixedResource.size() >= okr.getParallelism()) {
+            return Permute.getAllCombinations(fixedResource.toArray(new Person[fixedResource.size()]),fixedResource.size(), okr.getParallelism());
         }
 
+        Level finalMaxLevel = maxLevel;
+        List<Person> availableResources = plan.getTeam().getTeamMember().stream()
+                .filter(e -> e.level.ordinal() < finalMaxLevel.ordinal())
+                .filter(e -> !fixedResource.contains(e))
+                .collect(Collectors.toList());
+
+        int permuteBatchSize = okr.getParallelism() - fixedResource.size();
+        if (permuteBatchSize > availableResources.size()) {
+            permuteBatchSize = availableResources.size();
+        }
+
+        List<List<Person>> variableResources = Permute.getAllCombinations(availableResources.toArray(new Person[availableResources.size()]),
+                                                    availableResources.size(),
+                                                    permuteBatchSize);
+        variableResources.stream().forEach( p-> p.addAll(fixedResource));
+
+
+        return variableResources;
+    }
+
+    public Level preferredMaxLevel(Okr eachOkr) {
+        Level maxLevel = Level.SDE3;
+            if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=3) {
+                maxLevel = Level.PSE3;
+            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays <=10) {
+                maxLevel = Level.SDE1;
+            } else if (eachOkr.complexity == Complexity.SIMPLE && eachOkr.effortinPersonDays >10) {
+                maxLevel = Level.SDE1;
+            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays <=10) {
+                maxLevel = Level.SDE2;
+            } else if (eachOkr.complexity == Complexity.MEDIUM && eachOkr.effortinPersonDays >10) {
+                maxLevel = Level.SDE2;
+            } else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays <=10) {
+                maxLevel = Level.SDE2G10;
+            }  else if (eachOkr.complexity == Complexity.COMPLEX && eachOkr.effortinPersonDays > 10) {
+                maxLevel = Level.SDE2G10;
+            }
+        return maxLevel;
+    }
+
+    public void blockPeople( Okr okr, List<List<Person>> allCombinations, LocalDate preferredStartDate) {
         Map<List<Person>, LocalDate> endDateMap = new HashMap<>();
+        List<Week> preferredWeeks = plan.getWeeks().stream().filter(p -> p.getStartDate().isAfter(preferredStartDate)).collect(Collectors.toList());
         for(List<Person> eachCombination : allCombinations) {
             int effortRemaining = okr.effortinPersonDays;
             Week lastWeek = null;
-            for (Week week : plan.getWeeks()) {
+            for (Week week : preferredWeeks) {
                 double totalWeekEffort = 0;
 
                 for (Person member : eachCombination) {
@@ -74,7 +112,6 @@ public class Planner {
             if (effortRemaining > 0) {
                 endDateMap.put(eachCombination,lastWeek.getEndDate().plusDays(effortRemaining/eachCombination.size()));
             }
-
         }
 
         Map.Entry<List<Person>, LocalDate> listLocalDateEntry = endDateMap.entrySet().stream().sorted(new Comparator<Map.Entry<List<Person>, LocalDate>>() {
@@ -89,7 +126,7 @@ public class Planner {
 
         double efforRemaining = okr.effortinPersonDays;
 
-        for (Week week : plan.getWeeks()) {
+        for (Week week : preferredWeeks) {
             for (Person member :  listLocalDateEntry.getKey()) {
                 PersonWeek planForPersonWeek = getPlanForPersonWeek(member, week.getStartDate());
                 if(planForPersonWeek.unoccupied() == 0 ) {
@@ -111,11 +148,7 @@ public class Planner {
                 break;
             }
         }
-
-        if (efforRemaining > 0) {
-            return true;
-        }
-        return false;
+        okr.setSpillOver((int)efforRemaining);
     }
 
     public void populateDevOps(Okr devOpsOkr) {
@@ -126,7 +159,7 @@ public class Planner {
         plan.getPersonWeeks().stream()
                 .filter(pw -> eligibleMembers.contains(pw.getPerson()))
                 .forEach(pw ->
-                            pw.okrAllocations.add(new OkrAllocation(devOpsOkr,(float)(5-pw.getOccupied()) * 0.33f))
+                            pw.okrAllocations.add(new OkrAllocation(devOpsOkr,(float)(5-pw.getOccupied()-pw.getLeaves()) * 0.33f))
                 );
     }
 
@@ -321,7 +354,7 @@ public class Planner {
                     requesterOncallWeek.getOkrAllocations().add(new OkrAllocation(oncall, 5));
                     requesteeOncallWeek.getOkrAllocations().removeIf(p -> StringUtils.equalsIgnoreCase(p.getOkr().description, "ONCALL"));
                     requesterCurrentWeek.getOkrAllocations().removeIf(p -> StringUtils.equalsIgnoreCase(p.getOkr().description, "ONCALL"));
-                    requesteeOncallWeek.getOkrAllocations().add(new OkrAllocation(oncall, 5));
+                    requesteeCurrentWeek.getOkrAllocations().add(new OkrAllocation(oncall, 5));
                     break;
                 }
             }
@@ -386,4 +419,6 @@ public class Planner {
                 pw-> pw.okrAllocations.removeIf(al -> al.getOkr().getId() == okrId)
         );
     }
+
+
 }

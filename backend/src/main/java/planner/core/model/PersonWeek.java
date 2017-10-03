@@ -41,7 +41,7 @@ public class PersonWeek {
     }
 
     public String getDescriptionWithLeaves() {
-        return String.format("%s:(%d):(%f):(%s)", this.description, this.leaves, this.occupied(), getOkrList().stream().map(e -> e.description + " - " + e.willSpill).reduce("",(a,b) -> a+ " ^ " +b));
+        return String.format("%s:(%d):(%f):(%s)", this.description, this.leaves, this.occupied(), getOkrList().stream().map(e -> e.description + " - " + e.willSpill()).reduce("",(a,b) -> a+ " ^ " +b));
     }
 
     public String getPrettyHtmlDescription() {
@@ -50,7 +50,7 @@ public class PersonWeek {
             text += "D:" + description + ", </br>";
         }
         if(!getOkrList().isEmpty()){
-            text += getOkrList().stream().map(e -> e.description + " and slip = " + e.willSpill).reduce("", (a,b) -> a + "O:" + b + ", ");
+            text += getOkrList().stream().map(e -> e.description + " and slip = " + e.willSpill()).reduce("", (a,b) -> a + "O:" + b + ", ");
         }
         return text.trim();
     }
