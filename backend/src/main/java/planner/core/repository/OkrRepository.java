@@ -32,9 +32,10 @@ public class OkrRepository extends AbstractDAO<Okr> {
         newOkr.stream().forEach(p -> super.persist(p));
     }
 
-    public Okr getOkrByDescription(String name, Integer id) {
+    public Okr getOkrByDescription(String name, Integer id, String quarter) {
         return uniqueResult(namedQuery("planner.core.model.okr.findByName")
                 .setParameter("name","%" + name + "%")
+                .setParameter("quarter", quarter)
                 .setParameter("team", id));
     }
 

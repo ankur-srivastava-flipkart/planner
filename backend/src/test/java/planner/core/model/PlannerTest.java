@@ -61,7 +61,7 @@ public class PlannerTest {
             return setupService.createTeam(createTeamRequest);
         });
 
-        plan = planningService.reset("OFF", "AMJ");
+        plan = planningService.reset("OFF", "AMJ", 2017, 2017);
 
     }
 

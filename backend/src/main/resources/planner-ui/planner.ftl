@@ -1,15 +1,24 @@
 <html>
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
-<script src="/planner-ui/datagrid/pagination.min.js"></script>
-<script src="/planner-ui/datagrid/dataGrid.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+<link rel="styleSheet" href="/planner-ui/uigrid/ui-grid.min.css"/>
+<script src="/planner-ui/uigrid/ui-grid.min.js"> </script>
+
 <style type="text/css">
     td {border:1px solid grey; font-size: x-small}
     th {border:1px solid grey; font-size: x-small}
     p {font-size: x-small}
     td {font-size: x-small}
+
     .oncall { background-color: LightPink;}
     .leaves { background-color: LightSkyBlue ;}
     .current { background-color: #DDDDDD;}
+    .spillOver {background-color: #ff6060;}
+
+    .grid {
+        width: 80%;
+        height: 100px;
+    }
+
 </style>
 <body>
 <table>
@@ -40,57 +49,15 @@
 </#list>
 
 </table>
-
 <div ng-app = "bandwidthCaclulator" ng-controller = "bandwidthFinder">
     <p>Remaining Available Bandwidth (Not counting week of <input type="date" ng-model="asOfDate" ng-change="textChanged()" name="asOfDate" />) - {{availableBandwidth}} person days ({{availableBandwidth/5}} weeks).</p>
 </div>
+
 <div id="module2" ng-app = "okrTable" ng-controller = "okrController">
-    <div grid-data grid-options="gridOptions" grid-actions="gridActions" server-pagination="true">
-        <table class="table">
-            <thead>
-            <tr>
-                <th class="sortable">
-                    Id
-                </th>
-                <th class="sortable">
-                    Description
-                </th>
-                <th class="sortable">
-                    Jira Epic
-                </th>
-                <th class="sortable">
-                    effortinPersonDays
-                </th>
-                <th class="sortable">
-                    Complexity
-                </th>
-                <th class="sortable">
-                    Priority
-                </th>
-                <th class="sortable">
-                    parallelism
-                </th>
-                <th class="sortable">
-                    willSpill
-                </th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr grid-item>
-                <td ng-bind="item.id"></td>
-                <td ng-bind="item.description"></td>
-                <td ng-bind="item.jiraEpic"></td>
-                <td ng-bind="item.effortinPersonDays"></td>
-                <td ng-bind="item.complexity"></td>
-                <td ng-bind="item.priority"></td>
-                <td ng-bind="item.parallelism"></td>
-                <td ng-bind="item.spillOver"></td>
-            </tr>
-            </tbody>
-        </table>
+    <div ui-grid="gridOptions" class="grid"></div>
     </div>
-</div>
 <script>
+
 
     angular.module('bandwidthCaclulator', [])
             .controller('bandwidthFinder', function ($scope, $http, $filter) {
@@ -103,20 +70,26 @@
                 };
             });
 
-    angular.module('okrTable', ['dataGrid', 'pagination'])
-            .controller('okrController', function ($scope, $http, $filter) {
+    angular.module('okrTable' , ['ui.grid'])
+            .controller('okrController', ['$scope', '$http', 'uiGridConstants', function ($scope, $http, uiGridConstants) {
                 $scope.gridOptions = {
-                    data: [],
-                    getData: getServerData
+                    columnDefs: [
+                        {field: 'okr.id' , name: 'Id', width:"4%"},
+                        {field: 'okr.description', name: 'Description', width:"21%"},
+                        {field: 'okr.jiraEpic', name:'Jira', width:"10%"},
+                        {field: 'okr.effortinPersonDays', name:'Effort(PD)', width:"5%"},
+                        {field: 'okr.complexity',name:'Complexity', width:"10%"},
+                        {field: 'okr.priority',name:'Priority', width:"10%"},
+                        {field: 'okr.parallelism',name:'Parallelism', width:"10%"},
+                        {field: 'startDate',name:'Start Date', width:"10%", cellFilter: 'date:longdate'},
+                        {field: 'endDate',name:'End Date', width:"10%" , cellFilter: 'date:longdate'},
+                        {field: 'okr.spillOver',name:'SpillOver(PD)', width:"10%" }
+                        ]
                 };
-                function getServerData(params, callback) {
-                    $http.get('/planner/${planner.plan.getTeam().getName()}/${planner.plan.getQuarter()}/okr').then(function (response) {
-                        var data = response.data,
-                                totalItems = 100;
-                        callback(data, totalItems);
-                    });
-                };
-            });
+
+                $http.get('/planner/${planner.plan.getTeam().getName()}/${planner.plan.getQuarter()}/okr')
+                        .then(function(response) {$scope.gridOptions.data = response.data;});
+            }]);
 
     angular.bootstrap(document.getElementById("module2"), ['okrTable']);
 </script>

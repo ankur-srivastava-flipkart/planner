@@ -1,5 +1,6 @@
 package planner.bootstrap;
 
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -63,6 +64,8 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
         bootstrap.addBundle(hibernateBundle);
 
         bootstrap.addBundle(new ViewBundle());
+
+        bootstrap.getObjectMapper().registerModule(new JodaModule());
     }
 
     @Override
@@ -70,5 +73,10 @@ public class PlannerApplication extends Application<PlannerConfiguration> {
         environment.jersey().register(ApiListingResourceJSON.class);
         environment.jersey().register(SwaggerSerializers.class);
         ScannerFactory.setScanner(new DefaultJaxrsScanner());
+
+        environment.getObjectMapper().registerModule(new JodaModule());
+        environment.getObjectMapper().configure(com.fasterxml.jackson.databind.SerializationFeature.
+                WRITE_DATES_AS_TIMESTAMPS , false);
+
     }
 }

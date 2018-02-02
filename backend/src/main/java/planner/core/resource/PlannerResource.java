@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiOperation;
 import org.joda.time.LocalDate;
 import planner.core.dto.AddOkrRequest;
 import planner.core.dto.LeaveRequest;
+import planner.core.dto.OkrExecutionView;
 import planner.core.model.Okr;
 import planner.core.service.PlanningService;
 import planner.core.view.PlannerView;
@@ -17,7 +18,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -48,13 +48,14 @@ public class PlannerResource {
     }
 
     @POST
-    @Path("/plan/reset")
+    @Path("/plan/reset/")
     @ApiOperation(value = "Reset Quarter",
             notes = "Reset Quarter"
     )
     @UnitOfWork
-    public void resetQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter) {
-        planningService.reset(team, quarter);
+    public void resetQuarterPlan(@PathParam("team") String team, @PathParam("quarter") String quarter,
+                                 @QueryParam("startYear") int startYear, @QueryParam("endYear") int endYear) {
+        planningService.reset(team, quarter, startYear, endYear);
     }
 
     @POST
@@ -83,6 +84,14 @@ public class PlannerResource {
         return "done";
     }
 
+    @DELETE
+    @Path("/plan")
+    @UnitOfWork
+    public String deletePlan(@PathParam("team") String team, @PathParam("quarter") String quarter) {
+        planningService.deletePlan(team, quarter);
+        return "done";
+    }
+
     @POST
     @Path("/rePlan")
     @UnitOfWork
@@ -92,12 +101,11 @@ public class PlannerResource {
     }
 
 
-
     @GET
     @Path("/okr")
     @UnitOfWork
-    public Set<Okr> getOkr(@PathParam("team") String team, @PathParam("quarter") String quarter) {
-        return planningService.getAllOKR(team, quarter);
+    public List<OkrExecutionView> getOkr(@PathParam("team") String team, @PathParam("quarter") String quarter) {
+        return planningService.getAllPlannedOKR(team, quarter);
     }
 
     @POST
@@ -135,12 +143,6 @@ public class PlannerResource {
                 }
                 String member = action.param.containsKey(PARAMS.PERSON) && !action.param.get(PARAMS.PERSON).isEmpty() ? action.param.get(PARAMS.PERSON) : action.actor;
                 return planningService.getPlanForPersonWeek(team, quarter, member, date).toString();
-            case INIT_QTR_PLAN:
-                if (!action.actor.equals("ANKUR")) {
-                    return "Sorry! You are not the boss.";
-                }
-                planningService.reset(team, quarter);
-                return "Done";
             case GET_QTR_PLAN:
                 return "http://10.85.250.122:35432/planner/" + team + "/" + quarter + "/plan";
             case FETCH_ONCALL:

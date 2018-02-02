@@ -159,7 +159,7 @@ public class Planner {
         plan.getPersonWeeks().stream()
                 .filter(pw -> eligibleMembers.contains(pw.getPerson()))
                 .forEach(pw ->
-                            pw.okrAllocations.add(new OkrAllocation(devOpsOkr,(float)(5-pw.getOccupied()-pw.getLeaves()) * 0.33f))
+                            pw.okrAllocations.add(new OkrAllocation(devOpsOkr,(float)(5-pw.getLeaves()) * 0.33f))
                 );
     }
 

@@ -20,7 +20,7 @@ import javax.persistence.*;
                 query = "select p from Okr p where p.quarter like :quarter and p.team.name like :name"),
         @NamedQuery(name = "planner.core.model.okr.findByName",
                 query = "select p from Okr p"
-                        + " where p.description LIKE :name and p.team.id = :team")
+                        + " where p.description LIKE :name and p.team.id = :team and p.quarter = :quarter")
 
 })
 public class Okr {

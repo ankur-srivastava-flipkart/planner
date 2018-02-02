@@ -1,9 +1,11 @@
 package planner.core.service;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeConstants;
 import org.joda.time.LocalDate;
 import planner.core.dto.AddOkrRequest;
+import planner.core.dto.OkrExecutionView;
 import planner.core.model.*;
 import planner.core.repository.OkrRepository;
 import planner.core.repository.PlanRepository;
@@ -65,6 +67,15 @@ public class PlanningService {
         return plan;
     }
 
+    public void deletePlan(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Plan plan = planRepository.loadPlan(quarter, team1);
+        if (plan == null) {
+            throw new RuntimeException("No current personWeeks exists for this team/quarter. Please use the reset API to create a personWeeks.");
+        }
+        planRepository.deletePlan(plan);
+    }
+
     private Planner fetchPlanner(String quarter, Team team1) {
         Plan plan = planRepository.loadPlan(quarter, team1);
         if (plan == null) {
@@ -87,15 +98,76 @@ public class PlanningService {
         return month;
     }
 
-    public List<Week> fetchOrCreateWeeks(String quarter) {
-        List<Week> weeks = weekRepository.fetchWeeksByQuarter(quarter);
-        if (!weeks.isEmpty()) {
-            return weeks;
+    @Deprecated
+    public void extendMayInJFMA(String team) {
+        List<Week> weeksExpected = createWeeks("JFMAM", 2018, 2018);
+
+        List<Week> weeksOriginal = weekRepository.fetchWeeksByQuarter("JFMA");
+
+        List<Week> remainderWeeks = weeksExpected.stream().filter( w -> w.getWeekNumber() > 18).collect(Collectors.toList());
+
+        remainderWeeks.stream().forEach(w -> w.setQuarter("JFMA"));
+        // add extra weeks
+        weekRepository.persist(remainderWeeks);
+
+        Team team1 = validateTeamAndQuarter(team, "JFMA");
+        Planner planner = fetchPlanner("JFMA", team1);
+
+        // add weeks to existing plan
+        Plan plan = planner.getPlan();
+        plan.getWeeks().addAll(remainderWeeks);
+
+        // add person weeks to plan
+        for(Person member : plan.getTeam().getTeamMember()) {
+            for (Week week : remainderWeeks) {
+                PersonWeek personWeek = new PersonWeek();
+                personWeek.setPerson(member);
+                personWeek.setWeek(week);
+                plan.getPersonWeeks().add(personWeek);
+            }
         }
 
+        // add oncall
+
+        Okr oncall = okrRepository.getOkrByDescription("ONCALL", team1.getId(), "JFMA");
+
+        int i = 0;
+        for (Week week : remainderWeeks) {
+            final int tempV = i;
+            System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
+
+            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal())
+                    .sorted(new Comparator<Person>() {
+                        @Override
+                        public int compare(Person o1, Person o2) {
+                            return o1.getId().compareTo(o2.getId());
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            List<PersonWeek> matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
+                    pw.getWeek().getWeekNumber() == week.getWeekNumber() &&
+                            StringUtils.equals(pw.getPerson().getName(), eligibleMembers.get(tempV % eligibleMembers.size()).getName())
+
+            ).collect(Collectors.toList());
+            if (matchedWeeks.size() > 1) {
+                System.out.println(matchedWeeks);
+                throw new RuntimeException("More than one weeks matched");
+            }
+            matchedWeeks.get(0).getOkrAllocations().add(new OkrAllocation(oncall, 5 - matchedWeeks.get(0).getLeaves() ));
+            i = i+1;
+        }
+
+        planRepository.savePlan(plan);
+        return ;
+
+    }
+
+    public List<Week> createWeeks(String quarter,  int startYear, int endYear) {
+        List<Week> weeks = Lists.newArrayList();
         int startingMonth = getStartingMonth(quarter);
-        LocalDate startDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
-        LocalDate endDate = new LocalDate().withYear(2017).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
+        LocalDate startDate = new LocalDate().withYear(startYear).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
+        LocalDate endDate = new LocalDate().withYear(endYear).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
 
         int weekNumber = 1;
         while (startDate.isBefore(endDate.plusDays(7))) {
@@ -109,13 +181,22 @@ public class PlanningService {
             startDate = startDate.plusDays(7);
             weekNumber += 1;
         }
-
-        weekRepository.persist(weeks);
         return weeks;
     }
 
-    public Plan createNewPlan(Team team, String quarter) {
-        List<Week> weeks = fetchOrCreateWeeks(quarter);
+    public List<Week> fetchOrCreateWeeks(String quarter,  int startYear, int endYear) {
+        List<Week> weeks = weekRepository.fetchWeeksByQuarter(quarter);
+        if (!weeks.isEmpty()) {
+            return weeks;
+        }
+        weeks = createWeeks(quarter, startYear, endYear);
+        weekRepository.persist(weeks);
+        return weeks;
+
+    }
+
+    public Plan createNewPlan(Team team, String quarter, int startYear, int endYear) {
+        List<Week> weeks = fetchOrCreateWeeks(quarter, startYear, endYear);
         Plan plan = new Plan();
         Planner planner = new Planner();
         plan.setTeam(team);
@@ -126,7 +207,7 @@ public class PlanningService {
         return plan;
     }
 
-    public Plan reset(String team, String quarter) {
+    public Plan reset(String team, String quarter,  int startYear, int endYear) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         try {
             Plan plan = fetchPlan(quarter, team1);
@@ -134,7 +215,7 @@ public class PlanningService {
         } catch (RuntimeException ex) {
             ex.printStackTrace();
         }
-        Plan plan = createNewPlan(team1, quarter);
+        Plan plan = createNewPlan(team1, quarter, startYear, endYear);
         planRepository.savePlan(plan);
         return plan;
     }
@@ -171,14 +252,14 @@ public class PlanningService {
         Stream<AddOkrRequest> sortedOkrs = okrs.stream().sorted(new Comparator<AddOkrRequest>() {
             @Override
             public int compare(AddOkrRequest o1, AddOkrRequest o2) {
-                Okr okr1 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId());
-                Okr okr2 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId());
+                Okr okr1 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId(), quarter);
+                Okr okr2 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId(), quarter);
                 return okr1.getPriority() - okr2.getPriority();
             }
         });
         sortedOkrs.forEach(
                 p ->  {
-                    Okr okr = okrRepository.getOkrByDescription(p.getOkr(), team1.getId());
+                    Okr okr = okrRepository.getOkrByDescription(p.getOkr(), team1.getId(), quarter);
                     List<Person> preferredResource = p.getPreferredResource().stream().map(e -> setupService.getPersonByName(e)).collect(Collectors.toList());
                     planner.updateOKR(okr, preferredResource, p.getPreferredStartDate());
                     okr.setPreferredResource(p.getPreferredResource().stream().collect(Collectors.joining(",")));
@@ -186,6 +267,8 @@ public class PlanningService {
                 }
         );
     }
+
+
 
     public List<Okr> addOkr(String team, String quarter, String okr) {
         Team team1 = validateTeamAndQuarter(team, quarter);
@@ -259,7 +342,7 @@ public class PlanningService {
     public void addDevOps(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        planner.populateDevOps(okrRepository.getOkrByDescription("DEVOPS", team1.getId()));
+        planner.populateDevOps(okrRepository.getOkrByDescription("DEVOPS", team1.getId(), quarter));
         planRepository.savePlan(planner.getPlan());
     }
 
@@ -273,17 +356,39 @@ public class PlanningService {
     public void populateOncall(String team, String quarter) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
-        planner.populateOncall(okrRepository.getOkrByDescription("ONCALL", team1.getId()));
+        planner.populateOncall(okrRepository.getOkrByDescription("ONCALL", team1.getId(), quarter));
         planRepository.savePlan(planner.getPlan());
     }
 
     public Set<Okr> getAllOKR(String team, String quarter) {
-        Team team1 = validateTeamAndQuarter(team, quarter);
-        Planner planner = fetchPlanner(quarter, team1);
-        Set<Okr> collect = planner.getPlan().getPersonWeeks().stream()
-                .flatMap(pw -> pw.getOkrList().stream())
+        Set<Okr> collect = okrRepository.findAllOkrByTeamAndQuarter(team, quarter).stream()
                 .collect(Collectors.toSet());
         return collect;
+    }
 
+    private OkrExecutionView createOkrExecutionView(Okr okr, Planner planner) {
+        Comparator<PersonWeek> personWeekOkrComparator = new Comparator<PersonWeek>() {
+            @Override
+            public int compare(PersonWeek o1, PersonWeek o2) {
+                return o1.getWeek().getWeekNumber() - o2.getWeek().getWeekNumber();
+            }
+        };
+
+        Optional<PersonWeek> minWeek = planner.getPlan().getPersonWeeks().stream()
+                .filter(p -> p.getOkrAllocations().stream().map(OkrAllocation::getOkr).anyMatch(q -> q.equals(okr))).min(personWeekOkrComparator);
+
+        Optional<PersonWeek> maxWeek = planner.getPlan().getPersonWeeks().stream()
+                .filter(p -> p.getOkrAllocations().stream().map(OkrAllocation::getOkr).anyMatch(q -> q.equals(okr))).max(personWeekOkrComparator);
+
+        if (minWeek.isPresent() && maxWeek.isPresent())
+            return  new OkrExecutionView(okr, minWeek.get().getWeek().getStartDate(),  maxWeek.get().getWeek().getEndDate());
+        else
+            return new OkrExecutionView(okr, null, null);
+    }
+
+    public List<OkrExecutionView> getAllPlannedOKR(String team, String quarter) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        return getAllOKR(team,quarter).stream().map(p-> createOkrExecutionView(p, planner)).collect(Collectors.toList());
     }
 }
