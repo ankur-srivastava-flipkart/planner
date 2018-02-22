@@ -1,6 +1,7 @@
 package planner.core.model;
 
 import lombok.Data;
+import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
@@ -165,11 +166,16 @@ public class Planner {
 
     public void populateOncall(Okr oncall) {
         int i = 0;
+        CircularFifoBuffer last4Oncalls = new CircularFifoBuffer(3);
+        int first4 = 32;
+
         for (Week week : plan.getWeeks()) {
             final int tempV = i;
+            final int temp = first4;
             System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
 
-            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal())
+            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal()
+                                                            && p.getLevel().ordinal() < Level.ARCH.ordinal())
                     .sorted(new Comparator<Person>() {
                         @Override
                         public int compare(Person o1, Person o2) {
@@ -179,15 +185,22 @@ public class Planner {
                     .collect(Collectors.toList());
 
             List<PersonWeek> matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
-                    pw.week.getWeekNumber() == week.getWeekNumber() &&
-                            StringUtils.equals(pw.person.getName(), eligibleMembers.get(tempV % eligibleMembers.size()).getName())
+                    pw.week.getWeekNumber() == week.getWeekNumber())
+                    .filter(pw -> pw.getOccupied() < 1)
+                    .filter(pw -> pw.getLeaves() <=1)
+                    .filter(pw -> eligibleMembers.contains(pw.getPerson()))
+                            .filter(pw -> !last4Oncalls.contains(pw.getPerson()) || temp != 0)
 
-            ).collect(Collectors.toList());
-            if (matchedWeeks.size() > 1) {
-                System.out.println(matchedWeeks);
-                throw new RuntimeException("More than one weeks matched");
+            .collect(Collectors.toList());
+
+            if (matchedWeeks.isEmpty()) {
+                throw new RuntimeException("None of the weeks matched");
             }
-            matchedWeeks.get(0).okrAllocations.add(new OkrAllocation(oncall, 5 - matchedWeeks.get(0).leaves ));
+
+            PersonWeek selectedWeek = matchedWeeks.get(tempV % matchedWeeks.size());
+            selectedWeek.okrAllocations.add(new OkrAllocation(oncall, 5 - matchedWeeks.get(0).leaves ));
+            last4Oncalls.add(selectedWeek.getPerson());
+            first4 = first4 >> 1;
             i = i+1;
         }
     }
