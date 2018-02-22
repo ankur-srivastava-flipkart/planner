@@ -123,6 +123,19 @@ public class PlannerResource {
     }
 
     @POST
+    @Path("/resetPlanForPerson/{actor}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Various actions on the personWeeks. ",
+            notes = "Reset Quarter"
+    )
+    @UnitOfWork
+    public String resetPlanforPerson(@PathParam("team") String team, @PathParam("quarter") String quarter, @PathParam("actor") String actor, @QueryParam("effectiveFrom") String effectiveFrom) {
+        planningService.resetPlanForMember(team, quarter, actor, effectiveFrom);
+        return "done";
+    }
+
+
+    @POST
     @Path("/action")
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Various actions on the personWeeks. ",
@@ -132,9 +145,6 @@ public class PlannerResource {
     public String takeAction(@PathParam("team") String team, @PathParam("quarter") String quarter, Action action) {
         LocalDate date;
         switch (action.action) {
-            case RESET_PLAN_FOR_PERSON:
-                planningService.resetPlanForMember(team, quarter, action.actor);
-                return "done";
             case FETCH_TASKS:
                 if (action.param.containsKey(PARAMS.DATE) && !action.param.get(PARAMS.DATE).isEmpty()) {
                     date = new LocalDate(action.param.get(PARAMS.DATE));

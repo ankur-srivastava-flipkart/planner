@@ -251,11 +251,14 @@ public class Planner {
         }
     }
 
-    public void addPlanForPerson(Person member) {
+    public void addPlanForPerson(Person member, String effectiveFrom) {
             for (Week week : plan.getWeeks()) {
                 PersonWeek personWeek = new PersonWeek();
                 personWeek.person = member;
                 personWeek.week = week;
+                if (week.getStartDate().isBefore(LocalDate.parse(effectiveFrom))) {
+                    personWeek.setLeaves(5);
+                }
                 plan.getPersonWeeks().add(personWeek);
             }
     }

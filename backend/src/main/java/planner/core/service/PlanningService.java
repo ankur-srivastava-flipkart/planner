@@ -338,12 +338,12 @@ public class PlanningService {
         return new Double(planner.getRemainingBandwidthForQuarter(startDate)).intValue();
     }
 
-    public void resetPlanForMember(String team, String quarter, String actor) {
+    public void resetPlanForMember(String team, String quarter, String actor, String effectiveFrom) {
         Team team1 = validateTeamAndQuarter(team, quarter);
         Planner planner = fetchPlanner(quarter, team1);
         Person p = setupService.getPersonByName(actor);
         planner.getPlan().getPersonWeeks().removeIf(pw -> pw.getPerson().getId() == p.getId());
-        planner.addPlanForPerson(p);
+        planner.addPlanForPerson(p, effectiveFrom);
         planRepository.savePlan(planner.getPlan());
     }
 
