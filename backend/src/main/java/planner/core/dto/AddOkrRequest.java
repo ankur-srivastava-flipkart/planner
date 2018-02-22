@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.joda.time.LocalDate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -13,6 +14,6 @@ import java.util.List;
 @AllArgsConstructor
 public class AddOkrRequest {
    private String okr;
-   private List<String> preferredResource;
+   private List<String> preferredResource = new ArrayList<>();
    private LocalDate preferredStartDate;
 }

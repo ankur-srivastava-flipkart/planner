@@ -78,7 +78,7 @@ public class Okr {
         Okr okr = (Okr) o;
 
         if (quarter != null ? !quarter.equals(okr.quarter) : okr.quarter != null) return false;
-        if (!jiraEpic.equals(okr.jiraEpic)) return false;
+        if (!description.equals(okr.description)) return false;
         return team != null ? team.getName().equals(okr.team.getName()) : okr.team == null;
     }
 
@@ -86,7 +86,7 @@ public class Okr {
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + quarter.hashCode();
-        result = 31 * result + jiraEpic.hashCode();
+        result = 31 * result + description.hashCode();
         result = 31 * result + (team != null ? team.hashCode() : 0);
         return result;
     }

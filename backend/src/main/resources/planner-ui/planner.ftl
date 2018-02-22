@@ -19,6 +19,15 @@
         height: 100px;
     }
 
+    .ngViewport.ng-scope{
+        height: auto !important;
+        overflow-y: hidden;
+    }
+
+    .ngTopPanel.ng-scope, .ngHeaderContainer{
+        width: auto !important;
+    }
+
 </style>
 <body>
 <table>
@@ -73,6 +82,7 @@
     angular.module('okrTable' , ['ui.grid'])
             .controller('okrController', ['$scope', '$http', 'uiGridConstants', function ($scope, $http, uiGridConstants) {
                 $scope.gridOptions = {
+                    excessRows:50,
                     columnDefs: [
                         {field: 'okr.id' , name: 'Id', width:"4%"},
                         {field: 'okr.description', name: 'Description', width:"21%"},

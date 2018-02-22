@@ -252,20 +252,28 @@ public class PlanningService {
         Stream<AddOkrRequest> sortedOkrs = okrs.stream().sorted(new Comparator<AddOkrRequest>() {
             @Override
             public int compare(AddOkrRequest o1, AddOkrRequest o2) {
+                System.out.println(o1.getOkr() + " , " + o2.getOkr());
                 Okr okr1 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId(), quarter);
-                Okr okr2 = okrRepository.getOkrByDescription(o1.getOkr(), team1.getId(), quarter);
+                Okr okr2 = okrRepository.getOkrByDescription(o2.getOkr(), team1.getId(), quarter);
                 return okr1.getPriority() - okr2.getPriority();
             }
         });
-        sortedOkrs.forEach(
-                p ->  {
-                    Okr okr = okrRepository.getOkrByDescription(p.getOkr(), team1.getId(), quarter);
-                    List<Person> preferredResource = p.getPreferredResource().stream().map(e -> setupService.getPersonByName(e)).collect(Collectors.toList());
-                    planner.updateOKR(okr, preferredResource, p.getPreferredStartDate());
-                    okr.setPreferredResource(p.getPreferredResource().stream().collect(Collectors.joining(",")));
-                    okr.setPreferredStartDate(p.getPreferredStartDate());
-                }
-        );
+
+            sortedOkrs.forEach(
+                    p -> {
+                        try {
+                        Okr okr = okrRepository.getOkrByDescription(p.getOkr(), team1.getId(), quarter);
+                        List<Person> preferredResource = p.getPreferredResource().stream().map(e -> setupService.getPersonByName(e)).collect(Collectors.toList());
+                        planner.updateOKR(okr, preferredResource, p.getPreferredStartDate());
+                        okr.setPreferredResource(p.getPreferredResource().stream().collect(Collectors.joining(",")));
+                        okr.setPreferredStartDate(p.getPreferredStartDate());
+                        } catch (RuntimeException e) {
+                            System.out.println(e.getMessage());
+                            throw e;
+                        }
+                    }
+            );
+
     }
 
 
