@@ -165,21 +165,27 @@ public class Planner {
     }
 
     public void populateOncall(Okr oncall) {
+            populateOncall(oncall, plan.getTeam().getTeamMember());
+    }
+
+    public void populateOncall(Okr oncall, List<Person> personList) {
         int i = 0;
-        CircularFifoBuffer last4Oncalls = new CircularFifoBuffer(3);
-        int first4 = 32;
+        CircularFifoBuffer last4Oncalls = new CircularFifoBuffer(5);
+        int first4 = 128;
 
         for (Week week : plan.getWeeks()) {
             final int tempV = i;
             final int temp = first4;
-            System.out.println(tempV % plan.getTeam().getTeamMember().size() + 1);
 
-            List<Person> eligibleMembers = plan.getTeam().getTeamMember().stream().filter(p -> p.getLevel().ordinal() > Level.PSE3.ordinal()
+            System.out.println(tempV % personList.size() + 1);
+
+            List<Person> eligibleMembers = personList.stream().filter(
+                    p -> p.getLevel().ordinal() > Level.PSE3.ordinal()
                                                             && p.getLevel().ordinal() < Level.ARCH.ordinal())
                     .sorted(new Comparator<Person>() {
                         @Override
                         public int compare(Person o1, Person o2) {
-                            return o1.getId().compareTo(o2.getId());
+                            return personList.indexOf(o1) - personList.indexOf(o2);
                         }
                     })
                     .collect(Collectors.toList());
@@ -189,15 +195,33 @@ public class Planner {
                     .filter(pw -> pw.getOccupied() < 1)
                     .filter(pw -> pw.getLeaves() <=1)
                     .filter(pw -> eligibleMembers.contains(pw.getPerson()))
-                            .filter(pw -> !last4Oncalls.contains(pw.getPerson()) || temp != 0)
+                    .filter(pw -> !last4Oncalls.contains(pw.getPerson()))
+                    .sorted(new Comparator<PersonWeek>() {
+                        @Override
+                        public int compare(PersonWeek o1, PersonWeek o2) {
+                            return personList.indexOf(o1.getPerson()) - personList.indexOf(o2.getPerson());
+                        }
+                    })
 
             .collect(Collectors.toList());
 
             if (matchedWeeks.isEmpty()) {
-                throw new RuntimeException("None of the weeks matched");
+                System.out.println("None of the weeks matched, trying with reduced constraints");
+                matchedWeeks = plan.getPersonWeeks().stream().filter(pw ->
+                        pw.week.getWeekNumber() == week.getWeekNumber())
+                        .filter(pw -> pw.getOccupied() < 1)
+                        .filter(pw -> pw.getLeaves() <=1)
+                        .filter(pw -> eligibleMembers.contains(pw.getPerson()))
+                        //.filter(pw -> !last4Oncalls.contains(pw.getPerson()))
+                        .sorted(new Comparator<PersonWeek>() {
+                            @Override
+                            public int compare(PersonWeek o1, PersonWeek o2) {
+                                return personList.indexOf(o1.getPerson()) - personList.indexOf(o2.getPerson());
+                            }
+                        }).collect(Collectors.toList());;
             }
 
-            PersonWeek selectedWeek = matchedWeeks.get(tempV % matchedWeeks.size());
+            PersonWeek selectedWeek = matchedWeeks.get(0);
             selectedWeek.okrAllocations.add(new OkrAllocation(oncall, 5 - matchedWeeks.get(0).leaves ));
             last4Oncalls.add(selectedWeek.getPerson());
             first4 = first4 >> 1;
@@ -435,6 +459,7 @@ public class Planner {
                 pw-> pw.okrAllocations.removeIf(al -> al.getOkr().getId() == okrId)
         );
     }
+
 
 
 }

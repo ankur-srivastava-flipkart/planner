@@ -116,6 +116,14 @@ public class PlannerResource {
     }
 
     @POST
+    @Path("/addOncall")
+    @UnitOfWork
+    public String addOncall(@PathParam("team") String team, @PathParam("quarter") String quarter, List<String> peopleNames) {
+        planningService.populateOncall(team, quarter, peopleNames);
+        return "done";
+    }
+
+    @POST
     @Path("/removeLeave")
     @UnitOfWork
     public String removeLeave(@PathParam("team") String team, @PathParam("quarter") String quarter, List<LeaveRequest> requests) {

@@ -368,6 +368,15 @@ public class PlanningService {
         planRepository.savePlan(planner.getPlan());
     }
 
+    public void populateOncall(String team, String quarter, List<String> peopleNames) {
+        Team team1 = validateTeamAndQuarter(team, quarter);
+        Planner planner = fetchPlanner(quarter, team1);
+        List<Person> personList = peopleNames.stream().map(p -> setupService.getPersonByName(p)).collect(Collectors.toList());
+        planner.populateOncall(okrRepository.getOkrByDescription("ONCALL", team1.getId(), quarter), personList);
+        planRepository.savePlan(planner.getPlan());
+
+    }
+
     public Set<Okr> getAllOKR(String team, String quarter) {
         Set<Okr> collect = okrRepository.findAllOkrByTeamAndQuarter(team, quarter).stream()
                 .collect(Collectors.toSet());
@@ -399,4 +408,6 @@ public class PlanningService {
         Planner planner = fetchPlanner(quarter, team1);
         return getAllOKR(team,quarter).stream().map(p-> createOkrExecutionView(p, planner)).collect(Collectors.toList());
     }
+
+
 }
