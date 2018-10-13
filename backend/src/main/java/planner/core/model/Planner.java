@@ -138,8 +138,8 @@ public class Planner {
                     efforRemaining -= effortPlannedForCurrentWeek;
                     planForPersonWeek.okrAllocations.add(new OkrAllocation(okr, planForPersonWeek.unoccupied()));
                 } else {
-                    efforRemaining -= efforRemaining;
                     planForPersonWeek.okrAllocations.add(new OkrAllocation(okr , (float)Math.ceil(efforRemaining / member.productivity)));
+                    efforRemaining -= efforRemaining;
                 }
                 if ((int)efforRemaining == 0) {
                     break;
@@ -170,7 +170,7 @@ public class Planner {
 
     public void populateOncall(Okr oncall, List<Person> personList) {
         int i = 0;
-        CircularFifoBuffer last4Oncalls = new CircularFifoBuffer(5);
+        CircularFifoBuffer last4Oncalls = new CircularFifoBuffer(personList.size() -1);
         int first4 = 128;
 
         for (Week week : plan.getWeeks()) {

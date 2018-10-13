@@ -167,7 +167,7 @@ public class PlanningService {
         List<Week> weeks = Lists.newArrayList();
         int startingMonth = getStartingMonth(quarter);
         LocalDate startDate = new LocalDate().withYear(startYear).withMonthOfYear(startingMonth + 1).dayOfMonth().withMinimumValue();
-        LocalDate endDate = new LocalDate().withYear(endYear).withMonthOfYear(startingMonth + quarter.length()).dayOfMonth().withMaximumValue();
+        LocalDate endDate = new LocalDate().withYear(endYear).withMonthOfYear((startingMonth + quarter.length())%12).dayOfMonth().withMaximumValue();
 
         int weekNumber = 1;
         while (startDate.isBefore(endDate.plusDays(7))) {

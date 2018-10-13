@@ -18,7 +18,7 @@ public class PlanRepository extends AbstractDAO<Plan> {
 
     public Plan loadPlan(String quarter, Team team1) {
         return uniqueResult(namedQuery("planner.core.model.plan.findByTeamQuarter")
-                .setParameter("quarter", "%" + quarter + "%")
+                .setParameter("quarter",quarter)
                 .setParameter("team", "%" + team1.getName() + "%")
         );
     }

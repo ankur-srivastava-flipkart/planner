@@ -28,6 +28,6 @@ public class WeekRepository extends AbstractDAO<Week> {
 
     public List<Week> fetchWeeksByQuarter(String quarter) {
         return list(namedQuery("planner.core.model.week.findByQuarter")
-                .setParameter("quarter", "%" + quarter + "%"));
+                .setParameter("quarter", quarter ));
     }
 }
